@@ -222,6 +222,52 @@ fn benchmark_option_pricing(c: &mut Criterion) {
             );
         });
     });
+
+    // Monte Carlo AAD Greeks benchmarks
+    c.bench_function("monte_carlo_aad_greeks_5k", |b| {
+        let mc = MonteCarlo::new(5_000);
+        b.iter(|| {
+            let _ = mc.compute_greeks(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Call),
+            );
+        });
+    });
+
+    c.bench_function("monte_carlo_aad_greeks_10k", |b| {
+        let mc = MonteCarlo::new(10_000);
+        b.iter(|| {
+            let _ = mc.compute_greeks(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Call),
+            );
+        });
+    });
+
+    c.bench_function("monte_carlo_aad_greeks_put_5k", |b| {
+        let mc = MonteCarlo::new(5_000);
+        b.iter(|| {
+            let _ = mc.compute_greeks(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Put),
+            );
+        });
+    });
 }
 
 fn benchmark_bond_pricing(c: &mut Criterion) {

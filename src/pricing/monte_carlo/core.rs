@@ -571,6 +571,51 @@ impl MonteCarlo {
     fn get_rng(&self) -> ChaCha8Rng {
         ChaCha8Rng::seed_from_u64(self.seed.unwrap_or(42))
     }
+
+    /// Compute Greeks using Reverse-Mode Automatic Differentiation (AAD)
+    ///
+    /// AAD computes all Greeks in a single forward + backward pass per path,
+    /// making it ~5x faster than bump-and-reprice for 5 Greeks.
+    ///
+    /// # Arguments
+    /// * `spot` - Current spot price
+    /// * `strike` - Option strike price
+    /// * `rate` - Risk-free rate (continuous)
+    /// * `vol` - Volatility
+    /// * `div` - Dividend yield
+    /// * `time` - Time to expiry in years
+    /// * `option_type` - Call or Put
+    ///
+    /// # Returns
+    /// Greeks with uncertainty estimates
+    pub fn compute_greeks(
+        &self,
+        spot: Decimal,
+        strike: Decimal,
+        rate: Decimal,
+        vol: Decimal,
+        div: Decimal,
+        time: f64,
+        option_type: OptionType,
+    ) -> Result<GreeksWithUncertainty> {
+        let spot_f = spot
+            .to_f64()
+            .ok_or_else(|| Error::arithmetic("Invalid spot"))?;
+        let strike_f = strike
+            .to_f64()
+            .ok_or_else(|| Error::arithmetic("Invalid strike"))?;
+        let rate_f = rate
+            .to_f64()
+            .ok_or_else(|| Error::arithmetic("Invalid rate"))?;
+        let vol_f = vol
+            .to_f64()
+            .ok_or_else(|| Error::arithmetic("Invalid vol"))?;
+        let div_f = div
+            .to_f64()
+            .ok_or_else(|| Error::arithmetic("Invalid div"))?;
+
+        self.compute_greeks_aad(spot_f, strike_f, rate_f, vol_f, div_f, time, option_type)
+    }
 }
 
 impl Default for MonteCarlo {
