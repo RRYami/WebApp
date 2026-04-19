@@ -1,23 +1,4 @@
 //! Barone-Adesi Whaley (BAW) American option pricing model.
-//!
-//! BAW is a quadratic approximation method for pricing American options.
-//! It's much faster than binomial trees while maintaining good accuracy.
-//!
-//! The model decomposes the American option price into:
-//! - European component (Black-Scholes price)
-//! - Early exercise premium
-//!
-//! # Formulas
-//!
-//! For American calls:
-//! C(S) = C_bs(S) + A2 * (S/S*)^q2    when S < S*
-//! C(S) = S - K                       when S >= S*
-//!
-//! For American puts:
-//! P(S) = P_bs(S) + A1 * (S/S*)^q1    when S > S*
-//! P(S) = K - S                       when S <= S*
-//!
-//! Where S* is the critical stock price found by solving a nonlinear equation.
 
 use crate::core::error::{Error, Result};
 use crate::core::money::Money;

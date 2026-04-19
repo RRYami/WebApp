@@ -100,6 +100,128 @@ fn benchmark_option_pricing(c: &mut Criterion) {
             );
         });
     });
+
+    // Binomial Tree benchmarks
+    c.bench_function("binomial_european_100", |b| {
+        let tree = BinomialTree::crr(100);
+        b.iter(|| {
+            let _ = tree.price_european(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Call),
+            );
+        });
+    });
+
+    c.bench_function("binomial_european_1000", |b| {
+        let tree = BinomialTree::crr(1000);
+        b.iter(|| {
+            let _ = tree.price_european(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Call),
+            );
+        });
+    });
+
+    c.bench_function("binomial_american_100", |b| {
+        let tree = BinomialTree::crr(100);
+        b.iter(|| {
+            let _ = tree.price_american(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Put),
+            );
+        });
+    });
+
+    c.bench_function("binomial_american_1000", |b| {
+        let tree = BinomialTree::crr(1000);
+        b.iter(|| {
+            let _ = tree.price_american(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Put),
+            );
+        });
+    });
+
+    c.bench_function("binomial_american_5000", |b| {
+        let tree = BinomialTree::crr(5000);
+        b.iter(|| {
+            let _ = tree.price_american(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Put),
+            );
+        });
+    });
+
+    // Monte Carlo benchmarks
+    c.bench_function("monte_carlo_10k_sequential", |b| {
+        let mc = MonteCarlo::new(10_000);
+        b.iter(|| {
+            let _ = mc.price_european(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Call),
+            );
+        });
+    });
+
+    c.bench_function("monte_carlo_10k_parallel", |b| {
+        let mc = MonteCarlo::new(10_000);
+        b.iter(|| {
+            let _ = mc.price_european_parallel(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Call),
+            );
+        });
+    });
+
+    c.bench_function("monte_carlo_100k_parallel", |b| {
+        let mc = MonteCarlo::new(100_000);
+        b.iter(|| {
+            let _ = mc.price_european_parallel(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Call),
+            );
+        });
+    });
 }
 
 fn benchmark_bond_pricing(c: &mut Criterion) {

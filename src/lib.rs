@@ -49,7 +49,9 @@ pub mod prelude {
         traits::*,
     };
     pub use crate::instruments::{bond::*, option::*};
-    pub use crate::pricing::{barone_adesi_whaley::*, black_scholes::*, engine::*};
+    pub use crate::pricing::{
+        barone_adesi_whaley::*, binomial::*, black_scholes::*, engine::*, monte_carlo::*,
+    };
     pub use crate::risk::greeks::*;
     pub use rust_decimal::prelude::*;
     pub use rust_decimal_macros::dec;
@@ -72,8 +74,10 @@ pub use instruments::{
 
 pub use pricing::{
     barone_adesi_whaley::BaroneAdesiWhaley,
+    binomial::{BinomialModel, BinomialTree},
     black_scholes::BlackScholes,
     engine::{EngineRegistry, PricingEngine},
+    monte_carlo::{GreeksWithUncertainty, MonteCarlo, MonteCarloResult, VarianceStats},
 };
 
 pub use risk::greeks::Greeks;

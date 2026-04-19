@@ -16,6 +16,10 @@ rust_decimal_macros = "1.35"
 chrono = { version = "0.4", features = ["serde"] }
 thiserror = "1.0"
 serde = { version = "1.0", features = ["derive"], optional = true }
+rayon = "1.8"
+rand = "0.8"
+rand_chacha = "0.3"
+rand_distr = "0.4"
 
 [dev-dependencies]
 approx = "0.5"
