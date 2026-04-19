@@ -296,14 +296,13 @@ pub struct AmericanOption {
     risk_free_rate: Decimal,
     volatility: Decimal,
     time_to_expiry: f64,
+    dividend_yield: Decimal,
     option_type: OptionType,
     underlying_currency: CurrencyCode,
-    // For American options, we might want to track early exercise boundaries
-    // but that requires more sophisticated modeling
 }
 
 impl AmericanOption {
-    /// Create a new American option.
+    /// Create a new American option without dividends.
     pub fn new(
         strike: Decimal,
         spot: Decimal,
@@ -318,6 +317,29 @@ impl AmericanOption {
             risk_free_rate,
             volatility,
             time_to_expiry,
+            dividend_yield: Decimal::ZERO,
+            option_type,
+            underlying_currency: CurrencyCode::USD,
+        }
+    }
+
+    /// Create a new American option with dividend yield.
+    pub fn new_with_dividends(
+        strike: Decimal,
+        spot: Decimal,
+        risk_free_rate: Decimal,
+        volatility: Decimal,
+        time_to_expiry: f64,
+        dividend_yield: Decimal,
+        option_type: OptionType,
+    ) -> Self {
+        Self {
+            strike,
+            spot,
+            risk_free_rate,
+            volatility,
+            time_to_expiry,
+            dividend_yield,
             option_type,
             underlying_currency: CurrencyCode::USD,
         }
@@ -331,6 +353,26 @@ impl AmericanOption {
     /// Get the spot price.
     pub fn spot(&self) -> Decimal {
         self.spot
+    }
+
+    /// Get the risk-free rate.
+    pub fn risk_free_rate(&self) -> Decimal {
+        self.risk_free_rate
+    }
+
+    /// Get the volatility.
+    pub fn volatility(&self) -> Decimal {
+        self.volatility
+    }
+
+    /// Get the time to expiry.
+    pub fn time_to_expiry(&self) -> f64 {
+        self.time_to_expiry
+    }
+
+    /// Get the dividend yield.
+    pub fn dividend_yield(&self) -> Decimal {
+        self.dividend_yield
     }
 
     /// Get the option type.
@@ -350,6 +392,35 @@ impl AmericanOption {
     /// Get the underlying currency.
     pub fn underlying_currency(&self) -> CurrencyCode {
         self.underlying_currency
+    }
+
+    /// Calculate cost of carry (b = r - q).
+    pub fn cost_of_carry(&self) -> Decimal {
+        self.risk_free_rate - self.dividend_yield
+    }
+
+    /// Update the spot price and return a new option.
+    pub fn with_spot(&self, spot: Decimal) -> Self {
+        Self {
+            spot,
+            ..self.clone()
+        }
+    }
+
+    /// Update the volatility and return a new option.
+    pub fn with_volatility(&self, volatility: Decimal) -> Self {
+        Self {
+            volatility,
+            ..self.clone()
+        }
+    }
+
+    /// Update the time to expiry and return a new option.
+    pub fn with_time_to_expiry(&self, time_to_expiry: f64) -> Self {
+        Self {
+            time_to_expiry,
+            ..self.clone()
+        }
     }
 }
 

@@ -36,3 +36,7 @@ path = "examples/bond_pricing.rs"
 [[example]]
 name = "option_pricing"
 path = "examples/option_pricing.rs"
+
+[[example]]
+name = "american_option_pricing"
+path = "examples/american_option_pricing.rs"

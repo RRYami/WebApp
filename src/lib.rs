@@ -48,17 +48,9 @@ pub mod prelude {
         money::*,
         traits::*,
     };
-    pub use crate::instruments::{
-        bond::*,
-        option::*,
-    };
-    pub use crate::pricing::{
-        black_scholes::*,
-        engine::*,
-    };
-    pub use crate::risk::{
-        greeks::*,
-    };
+    pub use crate::instruments::{bond::*, option::*};
+    pub use crate::pricing::{barone_adesi_whaley::*, black_scholes::*, engine::*};
+    pub use crate::risk::greeks::*;
     pub use rust_decimal::prelude::*;
     pub use rust_decimal_macros::dec;
 }
@@ -75,14 +67,11 @@ pub use core::{
 
 pub use instruments::{
     bond::{Bond, CouponBond, ZeroCouponBond},
-    option::{EuropeanOption, OptionType},
+    option::{AmericanOption, EuropeanOption, OptionType},
 };
 
 pub use pricing::{
-    black_scholes::BlackScholes,
-    engine::PricingEngine,
+    barone_adesi_whaley::BaroneAdesiWhaley, black_scholes::BlackScholes, engine::PricingEngine,
 };
 
-pub use risk::{
-    greeks::Greeks,
-};
+pub use risk::greeks::Greeks;

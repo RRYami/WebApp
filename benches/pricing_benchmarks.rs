@@ -43,6 +43,63 @@ fn benchmark_option_pricing(c: &mut Criterion) {
             );
         });
     });
+
+    // BAW benchmarks
+    c.bench_function("baw_american_call", |b| {
+        b.iter(|| {
+            let _ = BaroneAdesiWhaley::price(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Call),
+            );
+        });
+    });
+
+    c.bench_function("baw_american_put", |b| {
+        b.iter(|| {
+            let _ = BaroneAdesiWhaley::price(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Put),
+            );
+        });
+    });
+
+    c.bench_function("baw_with_dividends", |b| {
+        b.iter(|| {
+            let _ = BaroneAdesiWhaley::price(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(dec!(0.03)),
+                black_box(1.0),
+                black_box(OptionType::Call),
+            );
+        });
+    });
+
+    c.bench_function("baw_greeks", |b| {
+        b.iter(|| {
+            let _ = BaroneAdesiWhaley::greeks(
+                black_box(dec!(100)),
+                black_box(dec!(100)),
+                black_box(dec!(0.05)),
+                black_box(dec!(0.2)),
+                black_box(Decimal::ZERO),
+                black_box(1.0),
+                black_box(OptionType::Call),
+            );
+        });
+    });
 }
 
 fn benchmark_bond_pricing(c: &mut Criterion) {
