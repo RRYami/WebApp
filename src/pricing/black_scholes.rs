@@ -343,9 +343,9 @@ impl Default for BlackScholes {
 }
 
 impl PricingEngine for BlackScholes {
-    fn price<I: Instrument + 'static>(&self, instrument: &I) -> Result<Money> {
+    fn price(&self, instrument: &dyn Instrument) -> Result<Money> {
         // Try to downcast to EuropeanOption
-        if let Some(option) = (instrument as &dyn std::any::Any).downcast_ref::<EuropeanOption>() {
+        if let Some(option) = instrument.as_any().downcast_ref::<EuropeanOption>() {
             let price = Self::price(
                 option.spot(),
                 option.strike(),
@@ -362,7 +362,14 @@ impl PricingEngine for BlackScholes {
             )))
         }
     }
-    // Note: supports() method not overridden - using trait default
+
+    fn supports(&self, instrument: &dyn Instrument) -> bool {
+        instrument.as_any().is::<EuropeanOption>()
+    }
+
+    fn name(&self) -> &'static str {
+        "BlackScholes"
+    }
 }
 
 impl Pricable for EuropeanOption {
@@ -378,7 +385,7 @@ impl Pricable for EuropeanOption {
         Ok(Money::new(price, self.underlying_currency()))
     }
 
-    fn price_with<E: PricingEngine>(&self, engine: &E) -> Result<Money> {
+    fn price_with_dyn(&self, engine: &dyn PricingEngine) -> Result<Money> {
         engine.price(self)
     }
 }

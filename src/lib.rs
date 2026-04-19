@@ -71,7 +71,9 @@ pub use instruments::{
 };
 
 pub use pricing::{
-    barone_adesi_whaley::BaroneAdesiWhaley, black_scholes::BlackScholes, engine::PricingEngine,
+    barone_adesi_whaley::BaroneAdesiWhaley,
+    black_scholes::BlackScholes,
+    engine::{EngineRegistry, PricingEngine},
 };
 
 pub use risk::greeks::Greeks;

@@ -4,7 +4,7 @@ use crate::core::day_count::DayCountConvention;
 use crate::core::error::{Error, Result};
 use crate::core::interest_rate::InterestRate;
 use crate::core::money::Money;
-use crate::core::traits::{CashFlowGenerating, HasYield, Instrument};
+use crate::core::traits::{AsAny, CashFlowGenerating, HasYield, Instrument};
 use chrono::{Datelike, NaiveDate};
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use rust_decimal::Decimal;
@@ -106,6 +106,16 @@ impl ZeroCouponBond {
     /// Get the day count convention.
     pub fn day_count_convention(&self) -> DayCountConvention {
         self.day_count
+    }
+}
+
+impl AsAny for ZeroCouponBond {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
     }
 }
 
@@ -407,6 +417,16 @@ impl CouponBond {
 
         dates.reverse();
         dates
+    }
+}
+
+impl AsAny for CouponBond {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
     }
 }
 

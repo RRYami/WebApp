@@ -543,8 +543,8 @@ impl Default for BaroneAdesiWhaley {
 }
 
 impl PricingEngine for BaroneAdesiWhaley {
-    fn price<I: Instrument + 'static>(&self, instrument: &I) -> Result<Money> {
-        if let Some(option) = (instrument as &dyn std::any::Any).downcast_ref::<AmericanOption>() {
+    fn price(&self, instrument: &dyn Instrument) -> Result<Money> {
+        if let Some(option) = instrument.as_any().downcast_ref::<AmericanOption>() {
             let price = Self::price(
                 option.spot(),
                 option.strike(),
@@ -562,6 +562,14 @@ impl PricingEngine for BaroneAdesiWhaley {
             )))
         }
     }
+
+    fn supports(&self, instrument: &dyn Instrument) -> bool {
+        instrument.as_any().is::<AmericanOption>()
+    }
+
+    fn name(&self) -> &'static str {
+        "BaroneAdesiWhaley"
+    }
 }
 
 impl Pricable for AmericanOption {
@@ -578,7 +586,7 @@ impl Pricable for AmericanOption {
         Ok(Money::new(price, self.underlying_currency()))
     }
 
-    fn price_with<E: PricingEngine>(&self, engine: &E) -> Result<Money> {
+    fn price_with_dyn(&self, engine: &dyn PricingEngine) -> Result<Money> {
         engine.price(self)
     }
 }

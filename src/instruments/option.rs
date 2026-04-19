@@ -3,7 +3,7 @@
 use crate::core::currency::CurrencyCode;
 use crate::core::error::Result;
 use crate::core::money::Money;
-use crate::core::traits::{Instrument, Optionable};
+use crate::core::traits::{AsAny, Instrument, Optionable};
 use chrono::NaiveDate;
 use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
@@ -234,6 +234,16 @@ impl EuropeanOption {
     }
 }
 
+impl AsAny for EuropeanOption {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+}
+
 impl Instrument for EuropeanOption {
     fn notional(&self) -> Money {
         // Options typically have a notional of 1 unit of underlying
@@ -421,6 +431,16 @@ impl AmericanOption {
             time_to_expiry,
             ..self.clone()
         }
+    }
+}
+
+impl AsAny for AmericanOption {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
     }
 }
 

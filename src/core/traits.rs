@@ -3,6 +3,16 @@
 use crate::core::error::Result;
 use crate::core::money::Money;
 use crate::risk::greeks::Greeks;
+use std::any::Any;
+
+/// Trait for downcasting to concrete types.
+/// Required for object-safe trait objects.
+pub trait AsAny: Any {
+    /// Get reference as Any for downcasting
+    fn as_any(&self) -> &dyn Any;
+    /// Get mutable reference as Any for downcasting
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+}
 
 /// Trait for types that can be priced.
 ///
@@ -15,16 +25,16 @@ pub trait Pricable {
     /// The price as a Money value, or an error if pricing fails.
     fn price(&self) -> Result<Money>;
 
-    /// Calculate the price with a specific pricing engine.
+    /// Calculate the price with a specific pricing engine (object-safe version).
     ///
-    /// # Type Parameters
+    /// # Arguments
     ///
-    /// * `E` - The pricing engine type.
+    /// * `engine` - The pricing engine to use.
     ///
     /// # Returns
     ///
     /// The price as a Money value, or an error if pricing fails.
-    fn price_with<E: PricingEngine>(&self, engine: &E) -> Result<Money>;
+    fn price_with_dyn(&self, engine: &dyn PricingEngine) -> Result<Money>;
 }
 
 /// Trait for types that have Greeks (risk sensitivities).
@@ -54,22 +64,44 @@ pub trait HasGreeks {
     fn rho(&self) -> Result<f64>;
 }
 
-/// Trait for pricing engines.
+/// Trait for pricing engines (object-safe version).
 ///
 /// Different pricing models (Black-Scholes, Binomial, Monte Carlo) implement this trait.
-pub trait PricingEngine {
+pub trait PricingEngine: Send + Sync {
     /// Price a given instrument.
     ///
-    /// # Type Parameters
+    /// # Arguments
     ///
-    /// * `I` - The instrument type to price.
-    fn price<I: Instrument + 'static>(&self, instrument: &I) -> Result<Money>;
+    /// * `instrument` - The instrument to price.
+    ///
+    /// # Returns
+    ///
+    /// The price as a Money value, or an error if pricing fails.
+    fn price(&self, instrument: &dyn Instrument) -> Result<Money>;
+
+    /// Check if this engine supports the given instrument.
+    ///
+    /// # Arguments
+    ///
+    /// * `instrument` - The instrument to check.
+    ///
+    /// # Returns
+    ///
+    /// `true` if the engine can price this instrument, `false` otherwise.
+    fn supports(&self, instrument: &dyn Instrument) -> bool;
+
+    /// Get the engine name.
+    ///
+    /// # Returns
+    ///
+    /// A static string identifier for this engine.
+    fn name(&self) -> &'static str;
 }
 
 /// Trait for financial instruments.
 ///
 /// This is the base trait that all financial instruments must implement.
-pub trait Instrument {
+pub trait Instrument: AsAny + Send + Sync {
     /// Get the instrument's notional amount.
     fn notional(&self) -> Money;
 
