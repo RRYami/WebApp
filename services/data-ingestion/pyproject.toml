@@ -1,0 +1,32 @@
+[project]
+name = "data-ingestion"
+version = "0.1.0"
+description = "Market data ingestion service for pricing platform"
+requires-python = ">=3.11"
+dependencies = [
+    "sqlalchemy>=2.0",
+    "psycopg2-binary",
+    "pydantic",
+    "pydantic-settings",
+    "apscheduler",
+    "httpx",
+    "structlog",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "W"]
