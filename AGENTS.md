@@ -43,8 +43,8 @@ A full-stack quantitative finance platform consisting of:
 - **Preview**: `npm run preview`
 
 ### Docker
-- **Start all**: `cd infra/docker && docker compose up --build`
-- **Dev override**: `docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build`
+- **Start all**: `cd infra/docker && docker compose --env-file ../../.env up --build`
+- **Dev override**: `cd infra/docker && docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file ../../.env up --build`
 
 ## Architecture & Conventions
 
@@ -97,12 +97,15 @@ The pricing-api exposes these JSON endpoints:
 
 ## Environment Variables
 
-Copy `infra/docker/.env.example` to `infra/docker/.env` and set:
+Copy `.env.example` to `.env` at the project root and set:
 
 - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- `DATABASE_URL`
 - `FRED_API_KEY`
 - `DATABENTO_API_KEY`
 - `LOG_LEVEL`
+
+> `.env` is gitignored. Never commit real secrets.
 
 ## Important Notes for Agents
 

@@ -48,18 +48,20 @@ pricing_platform/
 
 ### Environment Setup
 
-Copy the example environment file and configure your API keys:
+Copy the example environment file to the project root and configure your API keys:
 
 ```bash
-cp infra/docker/.env.example infra/docker/.env
-# Edit infra/docker/.env with your FRED and Databento API keys
+cp .env.example .env
+# Edit .env with your FRED and Databento API keys
 ```
+
+> **Security note:** `.env` is gitignored and must never be committed. It should contain your real secrets.
 
 ### Run with Docker Compose
 
 ```bash
 cd infra/docker
-docker compose up --build
+docker compose --env-file ../../.env up --build
 ```
 
 This starts:
@@ -72,7 +74,7 @@ This starts:
 For development (if available):
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file ../../.env up --build
 ```
 
 ### API Endpoints

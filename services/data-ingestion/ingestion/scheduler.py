@@ -11,6 +11,8 @@ logger = structlog.get_logger()
 
 
 def main():
+    settings.validate_secrets()
+
     scheduler = BlockingScheduler()
 
     # CPI is typically released monthly by the BLS around the 10th–15th.

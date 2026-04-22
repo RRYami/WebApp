@@ -1,2 +1,10 @@
+# Rust build artifacts
 /target
 **/target
+
+# Environment & secrets
+.env
+.env.local
+**/.env
+**/.env.local
+secrets/
