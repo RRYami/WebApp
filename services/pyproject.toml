@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Python services workspace for the pricing platform"
 requires-python = ">=3.11"
 dependencies = [
+    "datetime>=6.0",
     "httpx>=0.28.1",
 ]
 

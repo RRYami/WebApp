@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from sqlalchemy import Column, DateTime, Integer, Numeric, String
 
 from ingestion.db.session import Base

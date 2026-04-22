@@ -1,0 +1,125 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "unicorn",
+    "typescript",
+    "oxc",
+    "react",
+    "react-perf",
+    "import",
+    "vitest"
+  ],
+  "ignorePatterns": [
+    "routeTree.gen.ts",
+    "public/mockServiceWorker.js",
+    "src/core/i18n/locales/**",
+    "src/vite-env.d.ts"
+  ],
+  "env": {
+    "browser": true
+  },
+  "options": {
+    "typeAware": false,
+    "typeCheck": false
+  },
+  "settings": {},
+  "categories": {
+    "correctness": "error",
+    "perf": "error",
+    "restriction": "error",
+    "suspicious": "error",
+    "pedantic": "error"
+  },
+  "rules": {
+    "no-console": "allow",
+    "no-undefined": "allow",
+    "curly": "error",
+    "max-lines": "allow",
+    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+    "no-warning-comments": [
+      "allow",
+      { "terms": ["todo"], "location": "start", "decoration": [] }
+    ],
+    "no-inline-comments": "allow"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.{ts,tsx}"],
+      "plugins": ["oxc"],
+      "rules": {
+        "oxc/no-async-await": "allow",
+        "oxc/no-optional-chaining": "allow",
+        "oxc/no-rest-spread-properties": "allow"
+      }
+    },
+    {
+      "files": ["**/*.{js,ts,tsx}"],
+      "plugins": ["eslint"],
+      "rules": {
+        "eslint/max-depth": ["error", 3],
+        "eslint/max-lines-per-function": "allow",
+        "eslint/max-nested-callbacks": ["error", 5],
+        "no-shadow": "allow",
+        "no-use-before-define": "allow"
+      }
+    },
+    {
+      "files": ["**/*.{ts,tsx}"],
+      "plugins": ["import"],
+      "rules": {
+        "import/consistent-type-specifier-style": ["error", "prefer-inline"],
+        "import/max-dependencies": "allow",
+        "import/namespace": "allow"
+      }
+    },
+    {
+      "files": ["**/*.{js,ts,tsx}"],
+      "plugins": ["unicorn"],
+      "rules": {
+        "unicorn/no-abusive-eslint-disable": "allow",
+        "unicorn/no-instanceof-builtins": "allow",
+        "unicorn/no-nested-ternary": "allow",
+        "unicorn/no-array-reduce": "allow"
+      }
+    },
+    {
+      "files": ["**/*.{ts,tsx}"],
+      "plugins": ["typescript"],
+      "rules": {
+        "typescript/array-type": [
+          "error",
+          { "default": "array", "readonly": "array" }
+        ],
+        "typescript/explicit-function-return-type": "allow",
+        "typescript/no-import-type-side-effects": "allow",
+        "typescript/explicit-module-boundary-types": "allow"
+      }
+    },
+    {
+      "files": ["**/*.{jsx,tsx}"],
+      "plugins": ["react", "react-perf"],
+      "rules": {
+        "react/jsx-filename-extension": "allow",
+        "react/react-in-jsx-scope": "allow",
+        "react-perf/jsx-no-new-function-as-prop": "allow",
+        "react-perf/jsx-no-new-array-as-prop": "allow",
+        "react-perf/jsx-no-new-object-as-prop": "allow",
+        "react-perf/jsx-no-jsx-as-prop": "allow",
+        "react/no-multi-comp": [
+          "error",
+          {
+            "ignoreStateless": true
+          }
+        ]
+      }
+    },
+    {
+      "files": ["**/*.spec.{ts,tsx}"],
+      "plugins": ["vitest"],
+      "rules": {
+        "typescript/no-explicit-any": "allow",
+        "no-undefined": "allow"
+      }
+    }
+  ]
+}
