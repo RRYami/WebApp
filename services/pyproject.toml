@@ -1,0 +1,18 @@
+[project]
+name = "pricing-platform-services"
+version = "0.1.0"
+description = "Python services workspace for the pricing platform"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.28.1",
+]
+
+[tool.uv.workspace]
+members = ["data-ingestion"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "ruff",
+]

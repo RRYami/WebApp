@@ -20,13 +20,6 @@ dev = [
     "ruff",
 ]
 
-[tool.uv]
-dev-dependencies = [
-    "pytest",
-    "pytest-asyncio",
-    "ruff",
-]
-
 [tool.ruff]
 line-length = 100
 select = ["E", "F", "I", "W"]
