@@ -89,22 +89,24 @@ def run_cpi_pipeline(series_id: str = FRED_CPI_SERIES) -> int:
         logger.info("No valid rows after filtering", series=series_id)
         return 0
 
-    # ---- Load ----
+    # ---- Bulk Load in chunks ----
     db = SessionLocal()
     loaded = 0
+    chunk_size = 1000
     try:
-        for row in valid_rows:
+        for i in range(0, len(valid_rows), chunk_size):
+            chunk = valid_rows[i : i + chunk_size]
             stmt = (
                 insert(CpiData)
-                .values(**row)
+                .values(chunk)
                 .on_conflict_do_nothing(
                     index_elements=["release_date", "series_id"]
                 )
             )
             result = db.execute(stmt)
-            loaded += result.rowcount  # 1 if inserted, 0 if conflict
+            loaded += result.rowcount
+            db.commit()
 
-        db.commit()
         logger.info(
             "CPI pipeline complete",
             series=series_id,

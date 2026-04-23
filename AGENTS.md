@@ -31,9 +31,11 @@ A full-stack quantitative finance platform consisting of:
 ### Python (data-ingestion)
 - **Install**: `uv pip install -e ".[dev]"`
 - **Run scheduler**: `python -m ingestion.scheduler`
+- **Run pipeline on-demand**: `uv run pipeline cpi` or `uv run pipeline yield-curve`
 - **Lint**: `ruff check .`
 - **Format**: `ruff format .`
-- **Test**: `pytest`
+- **Test**: `pytest` (skips integration tests by default)
+- **Integration tests**: `pytest -m integration` (requires live FRED_API_KEY)
 - **Line length**: 100
 
 ### Web (React/TypeScript)
@@ -118,4 +120,6 @@ Copy `.env.example` to `.env` at the project root and set:
 7. **Tests**: Add unit tests next to the code, integration tests in `tests/`, and benchmarks in `benches/`.
 8. **Documentation**: The `libs/pricing-core/docs/` directory is for learning materials. Do not delete or move these files unless explicitly asked.
 9. **Docker builds**: The Rust API Dockerfile copies from the repo root context so it can access `libs/pricing-core`. The Python and web Dockerfiles use their own directories as context.
-10. **Git safety**: Do not run `git commit`, `git push`, or destructive git commands unless explicitly requested.
+10. **Docker env file**: Always run compose with `--env-file ../../.env` from `infra/docker/`. The `.env` must live at the repo root.
+11. **Pipeline bulk inserts**: Use chunked bulk inserts (e.g., 1,000 rows per commit) for TimescaleDB hypertables to avoid `out of shared memory` errors.
+12. **Git safety**: Do not run `git commit`, `git push`, or destructive git commands unless explicitly requested.

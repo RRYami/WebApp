@@ -1,6 +1,11 @@
 services:
   timescaledb:
     image: timescale/timescaledb:latest-pg16
+    command: >
+      postgres
+      -c max_locks_per_transaction=256
+      -c max_pred_locks_per_transaction=128
+      -c shared_buffers=256MB
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -32,10 +37,10 @@ services:
     build:
       context: ../../services/data-ingestion
       dockerfile: Dockerfile
+    env_file:
+      - ../../.env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@timescaledb:5432/${POSTGRES_DB:-pricing}
-      FRED_API_KEY: ${FRED_API_KEY:-}
-      DATABENTO_API_KEY: ${DATABENTO_API_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
       timescaledb:
@@ -49,6 +54,18 @@ services:
       - "80:80"
     depends_on:
       - pricing-api
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@localhost.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
 
 volumes:
   timescale_data:

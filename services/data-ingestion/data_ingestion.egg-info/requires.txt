@@ -1,0 +1,12 @@
+sqlalchemy>=2.0
+psycopg2-binary
+pydantic
+pydantic-settings
+apscheduler
+httpx
+structlog
+
+[dev]
+pytest
+pytest-asyncio
+ruff

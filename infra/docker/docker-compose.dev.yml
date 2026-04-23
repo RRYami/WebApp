@@ -1,6 +1,6 @@
 services:
   pricing-api:
-    image: rust:1.78-slim-bookworm
+    image: rust:1.85-slim-bookworm
     working_dir: /app
     volumes:
       - ../..:/app

@@ -70,12 +70,28 @@ This starts:
 - **Pricing API** on port `3000`
 - **Data Ingestion** service (scheduler)
 - **Web** frontend on port `80`
+- **pgAdmin** on port `5050`
 
 For development (if available):
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file ../../.env up --build
 ```
+
+### Database Access with pgAdmin
+
+pgAdmin is included in the Docker Compose stack for easy database exploration.
+
+1. Open [http://localhost:5050](http://localhost:5050)
+2. Log in with the credentials from your `.env` (default: `admin@localhost.com` / `admin`)
+3. **Add New Server** → **Connection** tab:
+   - Host: `timescaledb`
+   - Port: `5432`
+   - Database: `pricing`
+   - Username: `postgres`
+   - Password: `changeme` (or your `POSTGRES_PASSWORD`)
+
+> Use `timescaledb` as the host (not `localhost`) because pgAdmin runs inside Docker and uses Docker's internal DNS.
 
 ### API Endpoints
 
@@ -136,15 +152,23 @@ cd services/data-ingestion
 # Install dependencies with uv
 uv pip install -e ".[dev]"
 
-# Run the scheduler
+# Run the scheduler (inside Docker or locally)
 python -m ingestion.scheduler
+
+# Run a pipeline on-demand
+uv run pipeline cpi
+uv run pipeline yield-curve
+uv run pipeline cpi --series-id CPIAUCSL
 
 # Format / lint
 ruff check .
 ruff format .
 
-# Run tests
+# Run tests (skips integration tests by default)
 pytest
+
+# Run integration tests (hits live FRED API — requires FRED_API_KEY)
+pytest -m integration
 ```
 
 ### web (React)
@@ -206,6 +230,53 @@ pricing_platform/
     │   ├── docker-compose.dev.yml
     │   └── .env.example
     └── db/migrations/
+```
+
+## Troubleshooting
+
+### Port already allocated
+
+If you see `Bind for 0.0.0.0:3000 failed: port is already allocated`, another process or Docker container is using the port.
+
+```bash
+# Find the process
+ss -tlnp | grep 3000
+
+# Or stop other Docker projects
+docker stop <container-name>
+
+# Then retry
+cd infra/docker
+docker compose --env-file ../../.env up --build
+```
+
+### Out of shared memory (PostgreSQL)
+
+If queries or pipelines fail with `out of shared memory`, the default PostgreSQL lock limits are too low for TimescaleDB hypertables. The `docker-compose.yml` already tunes these settings:
+
+```yaml
+command: >
+  postgres
+  -c max_locks_per_transaction=256
+  -c max_pred_locks_per_transaction=128
+  -c shared_buffers=256MB
+```
+
+If you changed `docker-compose.yml` after the DB was initialized, wipe the volume and restart:
+
+```bash
+cd infra/docker
+docker compose down -v
+docker compose --env-file ../../.env up --build
+```
+
+### FRED API key not found
+
+Ensure `.env` is at the **project root** (not inside `infra/docker/`). The compose command must include `--env-file ../../.env`:
+
+```bash
+cd infra/docker
+docker compose --env-file ../../.env up --build
 ```
 
 ## Documentation

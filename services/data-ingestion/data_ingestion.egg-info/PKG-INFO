@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: data-ingestion
+Version: 0.1.0
+Summary: Market data ingestion service for pricing platform
+Requires-Python: >=3.11
+Requires-Dist: sqlalchemy>=2.0
+Requires-Dist: psycopg2-binary
+Requires-Dist: pydantic
+Requires-Dist: pydantic-settings
+Requires-Dist: apscheduler
+Requires-Dist: httpx
+Requires-Dist: structlog
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-asyncio; extra == "dev"
+Requires-Dist: ruff; extra == "dev"

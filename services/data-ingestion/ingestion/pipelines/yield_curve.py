@@ -125,18 +125,21 @@ def run_yield_curve_pipeline(
                 )
                 continue
 
-            # ---- Load ----
+            # ---- Bulk Load in chunks ----
             loaded = 0
-            for row in valid_rows:
+            chunk_size = 1000
+            for i in range(0, len(valid_rows), chunk_size):
+                chunk = valid_rows[i : i + chunk_size]
                 stmt = (
                     insert(YieldCurvePoint)
-                    .values(**row)
+                    .values(chunk)
                     .on_conflict_do_nothing(
                         index_elements=["curve_date", "tenor"]
                     )
                 )
                 result = db.execute(stmt)
                 loaded += result.rowcount
+                db.commit()
 
             total_loaded += loaded
             logger.info(
@@ -148,7 +151,6 @@ def run_yield_curve_pipeline(
                 skipped=len(valid_rows) - loaded,
             )
 
-        db.commit()
         logger.info(
             "Yield curve pipeline complete",
             total_loaded=total_loaded,

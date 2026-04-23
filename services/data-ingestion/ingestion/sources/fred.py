@@ -12,14 +12,15 @@ class FredSource(DataSource):
 
     def __init__(self) -> None:
         self.api_key = settings.fred_api_key
+        self._last_series_id: str | None = None
 
     def fetch(self, **params) -> dict:
         if not self.api_key:
             raise RuntimeError("FRED_API_KEY is not configured")
-        series_id = params.get("series_id")
+        self._last_series_id = params.get("series_id")
         url = f"{self.BASE_URL}/series/observations"
         query = {
-            "series_id": series_id,
+            "series_id": self._last_series_id,
             "api_key": self.api_key,
             "file_type": "json",
         }
@@ -28,7 +29,7 @@ class FredSource(DataSource):
         return response.json()
 
     def transform(self, raw: dict) -> list[dict]:
-        series_id = raw.get("series_id", "UNKNOWN")
+        series_id = raw.get("series_id") or self._last_series_id or "UNKNOWN"
         observations = raw.get("observations", [])
         records = []
         for obs in observations:

@@ -13,6 +13,9 @@ dependencies = [
     "structlog",
 ]
 
+[project.scripts]
+pipeline = "ingestion.cli:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest",
