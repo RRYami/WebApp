@@ -41,7 +41,7 @@ DEFAULT_TENORS: dict[str, str] = {
 SOURCE_NAME = "FRED"
 
 
-def _to_decimal(raw: str) -> Decimal | None:
+def _to_decimal(raw) -> Decimal | None:
     """Convert a FRED value string to Decimal, handling missing values."""
     if raw in (".", "", None):
         return None
@@ -110,12 +110,14 @@ def run_yield_curve_pipeline(
                     )
                     continue
 
-                valid_rows.append({
-                    "curve_date": curve_date,
-                    "tenor": tenor_label,
-                    "rate": rate,
-                    "source": SOURCE_NAME,
-                })
+                valid_rows.append(
+                    {
+                        "curve_date": curve_date,
+                        "tenor": tenor_label,
+                        "rate": rate,
+                        "source": SOURCE_NAME,
+                    }
+                )
 
             if not valid_rows:
                 logger.info(
@@ -133,12 +135,10 @@ def run_yield_curve_pipeline(
                 stmt = (
                     insert(YieldCurvePoint)
                     .values(chunk)
-                    .on_conflict_do_nothing(
-                        index_elements=["curve_date", "tenor"]
-                    )
+                    .on_conflict_do_nothing(index_elements=["curve_date", "tenor"])
                 )
                 result = db.execute(stmt)
-                loaded += result.rowcount
+                loaded += result.rowcount  # type: ignore
                 db.commit()
 
             total_loaded += loaded
