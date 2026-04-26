@@ -5,6 +5,7 @@ pydantic-settings
 apscheduler
 httpx
 structlog
+pyarrow
 
 [dev]
 pytest

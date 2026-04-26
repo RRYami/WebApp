@@ -3,7 +3,8 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Resolve the project root relative to this file:
-# ingestion/config.py -> services/data-ingestion/ingestion -> services/data-ingestion -> services -> root
+# ingestion/config.py -> services/data-ingestion/ingestion
+# -> services/data-ingestion -> services -> root
 _config_file = Path(__file__).resolve()
 try:
     _PROJECT_ROOT = _config_file.parents[3]

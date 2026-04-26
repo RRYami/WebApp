@@ -10,6 +10,7 @@ Requires-Dist: pydantic-settings
 Requires-Dist: apscheduler
 Requires-Dist: httpx
 Requires-Dist: structlog
+Requires-Dist: pyarrow
 Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Requires-Dist: pytest-asyncio; extra == "dev"

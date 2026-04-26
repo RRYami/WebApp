@@ -8,6 +8,7 @@ data_ingestion.egg-info/top_level.txt
 ingestion/__init__.py
 ingestion/cli.py
 ingestion/config.py
+ingestion/export.py
 ingestion/scheduler.py
 ingestion/db/__init__.py
 ingestion/db/models.py

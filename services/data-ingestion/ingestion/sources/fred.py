@@ -33,12 +33,14 @@ class FredSource(DataSource):
         observations = raw.get("observations", [])
         records = []
         for obs in observations:
-            records.append({
-                "series_id": series_id,
-                "release_date": obs["date"],
-                "value": obs["value"],
-                "period": obs.get("period", ""),
-            })
+            records.append(
+                {
+                    "series_id": series_id,
+                    "release_date": obs["date"],
+                    "value": obs["value"],
+                    "period": obs.get("period", ""),
+                }
+            )
         return records
 
     def load(self, records: list[dict]) -> None:

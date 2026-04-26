@@ -61,7 +61,7 @@ class TestFredSourceFetch:
 
 class TestFredSourceTransform:
     def test_transform_returns_list_of_dicts(self, source: FredSource) -> None:
-        """Transform must normalize observations into a list of dicts."""
+        """Transform must normalize observations into aaxum list of dicts."""
         raw = source.fetch(series_id="CPIAUCSL")
         records = source.transform(raw)
 
