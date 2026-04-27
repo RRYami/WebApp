@@ -33,6 +33,7 @@ pricing_platform/
 | Pricing Engine | Rust, `rust_decimal`, `rayon`, `rand` |
 | API | Rust, Axum, Tokio |
 | Data Ingestion | Python 3.12, SQLAlchemy, APScheduler, `httpx`, `structlog` |
+| Logging | `structlog` + stdlib `logging`, JSON Lines file output, plain-text console |
 | Frontend | React 18, TypeScript, Vite |
 | Database | TimescaleDB (PostgreSQL 16) |
 | Deployment | Docker, Docker Compose, Nginx |
@@ -56,6 +57,13 @@ cp .env.example .env
 ```
 
 > **Security note:** `.env` is gitignored and must never be committed. It should contain your real secrets.
+
+The `.env` file also controls logging:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_LEVEL` | `INFO` | Root log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `LOG_FILE_PATH` | `services/data-ingestion/logs/app.log.jsonl` | Path to the JSON Lines log file |
 
 ### Run with Docker Compose
 
@@ -171,6 +179,13 @@ pytest
 pytest -m integration
 ```
 
+**Logging:**
+
+- Console output is plain text (`INFO` and above) for readability during development.
+- File output is JSON Lines (`DEBUG` and above) with automatic rotation (5 MB, 3 backups).
+- Log files are written to the path configured by `LOG_FILE_PATH` (default: `services/data-ingestion/logs/app.log.jsonl`).
+- `structlog` key-value pairs (e.g. `logger.info("Fetched data", records=150)`) are automatically included in the JSON output.
+
 ### web (React)
 
 ```bash
@@ -215,7 +230,9 @@ pricing_platform/
 ├── services/data-ingestion/
 │   └── ingestion/
 │       ├── config.py
+│       ├── logging_config.py
 │       ├── scheduler.py
+│       ├── cli.py
 │       ├── db/
 │       ├── pipelines/
 │       └── sources/

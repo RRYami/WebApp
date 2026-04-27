@@ -69,6 +69,7 @@ A full-stack quantitative finance platform consisting of:
 - Scheduler entry point: `ingestion/scheduler.py` (APScheduler).
 - Data sources: `ingestion/sources/fred.py`, `ingestion/sources/databento.py`.
 - Pipelines: `ingestion/pipelines/equities.py`, `ingestion/pipelines/options.py`, `ingestion/pipelines/yield_curve.py`, `ingestion/pipelines/cpi.py`.
+- Logging: `ingestion/logging_config.py` sets up `structlog` bridged to stdlib `logging`. Console output is plain text (INFO+); file output is JSON Lines via `RotatingFileHandler` (DEBUG+, 5 MB rotation, 3 backups). Entry points must call `setup_logging(settings.log_level, settings.log_file_path)` before any log emissions.
 - Keep line length ≤ 100.
 
 ### Database
@@ -106,6 +107,7 @@ Copy `.env.example` to `.env` at the project root and set:
 - `FRED_API_KEY`
 - `DATABENTO_API_KEY`
 - `LOG_LEVEL`
+- `LOG_FILE_PATH` (default: `services/data-ingestion/logs/app.log.jsonl`)
 
 > `.env` is gitignored. Never commit real secrets.
 
@@ -122,4 +124,5 @@ Copy `.env.example` to `.env` at the project root and set:
 9. **Docker builds**: The Rust API Dockerfile copies from the repo root context so it can access `libs/pricing-core`. The Python and web Dockerfiles use their own directories as context.
 10. **Docker env file**: Always run compose with `--env-file ../../.env` from `infra/docker/`. The `.env` must live at the repo root.
 11. **Pipeline bulk inserts**: Use chunked bulk inserts (e.g., 1,000 rows per commit) for TimescaleDB hypertables to avoid `out of shared memory` errors.
-12. **Git safety**: Do not run `git commit`, `git push`, or destructive git commands unless explicitly requested.
+12. **Logging initialization**: `setup_logging()` must be called once at every Python entry point (`cli.py`, `scheduler.py`, tests). Never configure logging at import time.
+13. **Git safety**: Do not run `git commit`, `git push`, or destructive git commands unless explicitly requested.
