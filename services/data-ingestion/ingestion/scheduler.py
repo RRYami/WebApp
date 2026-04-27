@@ -4,6 +4,7 @@ import structlog
 from apscheduler.schedulers.blocking import BlockingScheduler
 
 from ingestion.config import settings
+from ingestion.logging_config import setup_logging
 from ingestion.pipelines.cpi import run_cpi_pipeline
 from ingestion.pipelines.yield_curve import run_yield_curve_pipeline
 
@@ -11,6 +12,7 @@ logger = structlog.get_logger()
 
 
 def main():
+    setup_logging(settings.log_level, settings.log_file_path)
     settings.validate_secrets()
 
     scheduler = BlockingScheduler()

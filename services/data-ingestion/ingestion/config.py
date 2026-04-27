@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     databento_api_key: str | None = None
     fred_api_key: str | None = None
     log_level: str = "INFO"
+    log_file_path: str = str(_config_file.parent.parent / "logs" / "app.log.jsonl")
 
     def validate_secrets(self) -> None:
         """Fail fast if required API keys are missing."""

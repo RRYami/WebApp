@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-04-27 22:20:42",
+  "level": "INFO",
+  "logger": "ingestion.pipelines.yield_curve",
+  "message": "Fetching yield curve point",
+  "module": "yield_curve",
+  "function": "run_yield_curve_pipeline",
+  "line": 91,
+  "thread": "MainThread",
+  "process": "MainProcess",
+  "series": "DGS1MO",
+  "tenor": "1M"
+}

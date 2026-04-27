@@ -16,6 +16,7 @@ from typing import Callable
 import structlog
 
 from ingestion.config import settings
+from ingestion.logging_config import setup_logging
 from ingestion.pipelines.cpi import run_cpi_pipeline
 from ingestion.pipelines.yield_curve import run_yield_curve_pipeline
 
@@ -28,6 +29,8 @@ PIPELINES: dict[str, Callable] = {
 
 
 def main() -> int:
+    setup_logging(settings.log_level, settings.log_file_path)
+
     parser = argparse.ArgumentParser(description="Run a data ingestion pipeline on-demand.")
     parser.add_argument(
         "pipeline",
