@@ -94,8 +94,16 @@ The pricing-api exposes these JSON endpoints:
   - Body: `{ strike, spot, risk_free_rate, volatility, time_to_maturity, option_type, dividend_yield? }`
   - Response: `{ price, currency }`
 
+- `POST /price/baw-american-option`
+  - Body: same as american-option pricing
+  - Response: `{ price, currency }`
+
 - `POST /greeks/european-option`
   - Body: same as european-option pricing
+  - Response: `{ delta, gamma, theta, vega, rho, phi }`
+
+- `POST /greeks/american-option`
+  - Body: same as american-option pricing
   - Response: `{ delta, gamma, theta, vega, rho, phi }`
 
 ## Environment Variables
