@@ -79,7 +79,6 @@ pub async fn greeks_european_option(
         theta: greeks.theta,
         vega: greeks.vega,
         rho: greeks.rho,
-        phi: greeks.phi,
     }))
 }
 
@@ -114,7 +113,6 @@ pub async fn greeks_american_option(
         theta: greeks.theta,
         vega: greeks.vega,
         rho: greeks.rho,
-        phi: greeks.phi,
     }))
 }
 
@@ -218,7 +216,6 @@ pub async fn greeks_curve(
                     theta: greeks.theta,
                     vega: greeks.vega,
                     rho: greeks.rho,
-                    phi: greeks.phi,
                 })
             })
             .collect()
@@ -253,7 +250,6 @@ pub async fn greeks_curve(
                     theta: greeks.theta,
                     vega: greeks.vega,
                     rho: greeks.rho,
-                    phi: greeks.phi,
                 })
             })
             .collect()

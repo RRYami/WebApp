@@ -250,11 +250,6 @@ impl BlackScholes {
             theta,
             vega,
             rho,
-            phi: -time
-                * Self::price_call(spot, strike, rate, volatility, time)?
-                    .to_f64()
-                    .unwrap_or(0.0)
-                / 365.0,
         })
     }
 

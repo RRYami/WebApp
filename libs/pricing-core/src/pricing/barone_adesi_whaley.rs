@@ -486,7 +486,6 @@ impl BaroneAdesiWhaley {
             theta,
             vega,
             rho,
-            phi: 0.0,
         })
     }
 

@@ -35,7 +35,6 @@ pub struct GreeksResponse {
     pub theta: f64,
     pub vega: f64,
     pub rho: f64,
-    pub phi: f64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -72,7 +71,6 @@ pub struct GreeksCurvePoint {
     pub theta: f64,
     pub vega: f64,
     pub rho: f64,
-    pub phi: f64,
 }
 
 #[derive(Debug, Serialize)]

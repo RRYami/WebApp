@@ -16,7 +16,6 @@ interface GreeksResponse {
   theta: number
   vega: number
   rho: number
-  phi: number
 }
 
 interface FormState {
@@ -352,7 +351,6 @@ export default function OptionPricer() {
                     ['Theta', greeksResult.theta],
                     ['Vega', greeksResult.vega],
                     ['Rho', greeksResult.rho],
-                    ['Phi', greeksResult.phi],
                   ] as [string, number][]
                 ).map(([name, value]) => (
                   <div

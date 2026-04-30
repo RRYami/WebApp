@@ -33,13 +33,11 @@ interface GreeksPoint {
   'Call-Theta'?: number
   'Call-Vega'?: number
   'Call-Rho'?: number
-  'Call-Phi'?: number
   'Put-Delta'?: number
   'Put-Gamma'?: number
   'Put-Theta'?: number
   'Put-Vega'?: number
   'Put-Rho'?: number
-  'Put-Phi'?: number
 }
 
 const colors = {
@@ -48,7 +46,6 @@ const colors = {
   theta: '#fbbf24',
   vega: '#a78bfa',
   rho: '#fb923c',
-  phi: '#22d3ee',
 }
 
 const tooltipStyle = {
@@ -88,7 +85,6 @@ export default function Visualize({
     theta: true,
     vega: true,
     rho: false,
-    phi: false,
   })
   const [priceData, setPriceData] = useState<PricePoint[]>([])
   const [greeksData, setGreeksData] = useState<GreeksPoint[]>([])
@@ -160,7 +156,6 @@ export default function Visualize({
       [`${optionType}-Theta`]: p.theta,
       [`${optionType}-Vega`]: p.vega,
       [`${optionType}-Rho`]: p.rho,
-      [`${optionType}-Phi`]: p.phi,
     }))
   }
 
@@ -210,7 +205,7 @@ export default function Visualize({
 
   const labelClass = 'mb-1 block text-xs font-medium text-slate-300'
 
-  const greekKeys = ['delta', 'gamma', 'theta', 'vega', 'rho', 'phi'] as const
+  const greekKeys = ['delta', 'gamma', 'theta', 'vega', 'rho'] as const
 
   return (
     <div className="space-y-6">

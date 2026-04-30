@@ -24,10 +24,6 @@ pub struct Greeks {
     /// Rho: sensitivity to interest rates (for 1% change).
     /// Positive for calls, negative for puts.
     pub rho: f64,
-
-    /// Phi (or vanna): sensitivity of delta to volatility.
-    /// Also known as DvegaDspot or DdeltaDvol.
-    pub phi: f64,
 }
 
 impl Greeks {
@@ -39,19 +35,6 @@ impl Greeks {
             theta,
             vega,
             rho,
-            phi: 0.0,
-        }
-    }
-
-    /// Create a new Greeks struct with all values including phi.
-    pub fn with_phi(delta: f64, gamma: f64, theta: f64, vega: f64, rho: f64, phi: f64) -> Self {
-        Self {
-            delta,
-            gamma,
-            theta,
-            vega,
-            rho,
-            phi,
         }
     }
 
@@ -63,7 +46,6 @@ impl Greeks {
             theta: 0.0,
             vega: 0.0,
             rho: 0.0,
-            phi: 0.0,
         }
     }
 
@@ -75,7 +57,6 @@ impl Greeks {
             theta: self.theta * factor,
             vega: self.vega * factor,
             rho: self.rho * factor,
-            phi: self.phi * factor,
         }
     }
 
@@ -102,11 +83,6 @@ impl Greeks {
     /// Get rho (convenience method).
     pub fn rho(&self) -> f64 {
         self.rho
-    }
-
-    /// Get phi (convenience method).
-    pub fn phi(&self) -> f64 {
-        self.phi
     }
 
     /// Calculate the total P&L approximation for small changes.

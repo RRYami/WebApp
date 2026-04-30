@@ -186,7 +186,7 @@ pub fn greeks(
         OptionType::Put => -strike_f * time * (-rate_f * time).exp() * ndf(-d2_val) / 100.0,
     };
     
-    Ok(Greeks { delta, gamma, theta, vega, rho, phi: 0.0 })
+    Ok(Greeks { delta, gamma, theta, vega, rho })
 }
 ```
 
