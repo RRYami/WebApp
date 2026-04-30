@@ -79,6 +79,14 @@ pub struct GreeksCurveResponse {
 }
 
 #[derive(Debug, Serialize)]
+pub struct SecondOrderGreeksResponse {
+    pub vanna: f64,
+    pub charm: f64,
+    pub vomma: f64,
+    pub speed: f64,
+}
+
+#[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     pub error: String,
 }

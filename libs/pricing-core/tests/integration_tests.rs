@@ -154,6 +154,39 @@ fn test_portfolio_greeks() {
 }
 
 #[test]
+fn test_second_order_greeks() {
+    let option = EuropeanOption::new(
+        dec!(100),
+        dec!(100),
+        dec!(0.05),
+        dec!(0.2),
+        1.0,
+        OptionType::Call,
+    );
+
+    let sog = option.second_order_greeks().expect("Should get second-order Greeks");
+    assert!(sog.vanna.is_finite());
+    assert!(sog.vomma.is_finite());
+    assert!(sog.charm.is_finite());
+    assert!(sog.speed.is_finite());
+
+    // American option placeholder should return zeros
+    let american = AmericanOption::new(
+        dec!(100),
+        dec!(100),
+        dec!(0.05),
+        dec!(0.2),
+        1.0,
+        OptionType::Call,
+    );
+    let american_sog = american.second_order_greeks().expect("Should get zeros");
+    assert_eq!(american_sog.vanna, 0.0);
+    assert_eq!(american_sog.vomma, 0.0);
+    assert_eq!(american_sog.charm, 0.0);
+    assert_eq!(american_sog.speed, 0.0);
+}
+
+#[test]
 fn test_zero_coupon_bond_ytm() {
     let bond = ZeroCouponBond::new(
         Money::new(dec!(1000), CurrencyCode::USD),

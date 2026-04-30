@@ -2,7 +2,7 @@
 
 use crate::core::error::Result;
 use crate::core::money::Money;
-use crate::risk::greeks::Greeks;
+use crate::risk::greeks::{Greeks, SecondOrderGreeks};
 use std::any::Any;
 
 /// Trait for downcasting to concrete types.
@@ -62,6 +62,18 @@ pub trait HasGreeks {
 
     /// Calculate rho (sensitivity to interest rate).
     fn rho(&self) -> Result<f64>;
+}
+
+/// Trait for types that have second-order Greeks.
+///
+/// This is typically implemented by options and other derivatives.
+pub trait HasSecondOrderGreeks {
+    /// Calculate all second-order Greeks at once.
+    ///
+    /// # Returns
+    ///
+    /// A SecondOrderGreeks struct containing all higher-order sensitivities.
+    fn second_order_greeks(&self) -> Result<SecondOrderGreeks>;
 }
 
 /// Trait for pricing engines (object-safe version).

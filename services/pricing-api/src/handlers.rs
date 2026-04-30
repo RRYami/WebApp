@@ -1,9 +1,10 @@
 use axum::{extract::Json, http::StatusCode, response::IntoResponse};
-use pricing_core::{AmericanOption, EuropeanOption, OptionType, Pricable, HasGreeks, BaroneAdesiWhaley};
+use pricing_core::{AmericanOption, EuropeanOption, OptionType, Pricable, HasGreeks, HasSecondOrderGreeks, BaroneAdesiWhaley};
 
 use crate::models::{
     AmericanOptionRequest, CurveRequest, ErrorResponse, EuropeanOptionRequest, GreeksCurvePoint,
     GreeksCurveResponse, GreeksResponse, PriceCurvePoint, PriceCurveResponse, PriceResponse,
+    SecondOrderGreeksResponse,
 };
 
 pub async fn health() -> &'static str {
@@ -113,6 +114,60 @@ pub async fn greeks_american_option(
         theta: greeks.theta,
         vega: greeks.vega,
         rho: greeks.rho,
+    }))
+}
+
+pub async fn second_order_greeks_european_option(
+    Json(req): Json<EuropeanOptionRequest>,
+) -> Result<Json<SecondOrderGreeksResponse>, AppError> {
+    let option_type = parse_option_type(&req.option_type)?;
+    let option = EuropeanOption::new(
+        req.strike,
+        req.spot,
+        req.risk_free_rate,
+        req.volatility,
+        req.time_to_maturity,
+        option_type,
+    );
+    let sog = option.second_order_greeks()?;
+    Ok(Json(SecondOrderGreeksResponse {
+        vanna: sog.vanna,
+        charm: sog.charm,
+        vomma: sog.vomma,
+        speed: sog.speed,
+    }))
+}
+
+pub async fn second_order_greeks_american_option(
+    Json(req): Json<AmericanOptionRequest>,
+) -> Result<Json<SecondOrderGreeksResponse>, AppError> {
+    let option_type = parse_option_type(&req.option_type)?;
+    let option = if let Some(div) = req.dividend_yield {
+        AmericanOption::new_with_dividends(
+            req.strike,
+            req.spot,
+            req.risk_free_rate,
+            req.volatility,
+            req.time_to_maturity,
+            div,
+            option_type,
+        )
+    } else {
+        AmericanOption::new(
+            req.strike,
+            req.spot,
+            req.risk_free_rate,
+            req.volatility,
+            req.time_to_maturity,
+            option_type,
+        )
+    };
+    let sog = option.second_order_greeks()?;
+    Ok(Json(SecondOrderGreeksResponse {
+        vanna: sog.vanna,
+        charm: sog.charm,
+        vomma: sog.vomma,
+        speed: sog.speed,
     }))
 }
 

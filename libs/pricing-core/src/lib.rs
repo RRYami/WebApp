@@ -64,7 +64,7 @@ pub use core::{
     error::{Error, Result},
     interest_rate::{Compounding, InterestRate},
     money::Money,
-    traits::{HasGreeks, Pricable},
+    traits::{HasGreeks, HasSecondOrderGreeks, Pricable},
 };
 
 pub use instruments::{
@@ -80,4 +80,4 @@ pub use pricing::{
     monte_carlo::{GreeksWithUncertainty, MonteCarlo, MonteCarloResult, VarianceStats},
 };
 
-pub use risk::greeks::Greeks;
+pub use risk::greeks::{Greeks, SecondOrderGreeks};

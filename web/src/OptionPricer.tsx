@@ -18,6 +18,13 @@ interface GreeksResponse {
   rho: number
 }
 
+interface SecondOrderGreeksResponse {
+  vanna: number
+  charm: number
+  vomma: number
+  speed: number
+}
+
 interface FormState {
   instrument: InstrumentType
   optionType: OptionType
@@ -53,6 +60,8 @@ export default function OptionPricer() {
   const [error, setError] = useState<string | null>(null)
   const [priceResult, setPriceResult] = useState<PriceResponse | null>(null)
   const [greeksResult, setGreeksResult] = useState<GreeksResponse | null>(null)
+  const [secondOrderResult, setSecondOrderResult] = useState<SecondOrderGreeksResponse | null>(null)
+  const [showSecondOrder, setShowSecondOrder] = useState(false)
 
   const update = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -76,6 +85,7 @@ export default function OptionPricer() {
     setError(null)
     setPriceResult(null)
     setGreeksResult(null)
+    setSecondOrderResult(null)
     try {
       let endpoint: string
       if (form.instrument === 'European') {
@@ -109,6 +119,7 @@ export default function OptionPricer() {
     setError(null)
     setPriceResult(null)
     setGreeksResult(null)
+    setSecondOrderResult(null)
     try {
       const endpoint =
         form.instrument === 'European'
@@ -125,6 +136,33 @@ export default function OptionPricer() {
       }
       const data: GreeksResponse = await res.json()
       setGreeksResult(data)
+    } catch (e: any) {
+      setError(e.message || 'Request failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchSecondOrderGreeks = async () => {
+    if (secondOrderResult) return
+    setLoading(true)
+    setError(null)
+    try {
+      const endpoint =
+        form.instrument === 'European'
+          ? '/api/greeks/second-order/european-option'
+          : '/api/greeks/second-order/american-option'
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildBody()),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || `HTTP ${res.status}`)
+      }
+      const data: SecondOrderGreeksResponse = await res.json()
+      setSecondOrderResult(data)
     } catch (e: any) {
       setError(e.message || 'Request failed')
     } finally {
@@ -363,6 +401,49 @@ export default function OptionPricer() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Higher-Order Greeks */}
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    setShowSecondOrder((prev) => !prev)
+                    if (!showSecondOrder && !secondOrderResult) {
+                      fetchSecondOrderGreeks()
+                    }
+                  }}
+                  className="text-xs font-medium text-emerald-400 hover:text-emerald-300"
+                >
+                  {showSecondOrder ? '▼' : '▶'} Higher-Order Greeks
+                </button>
+                {showSecondOrder && (
+                  <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {secondOrderResult ? (
+                      (
+                        [
+                          ['Vanna', secondOrderResult.vanna],
+                          ['Vomma', secondOrderResult.vomma],
+                          ['Charm', secondOrderResult.charm],
+                          ['Speed', secondOrderResult.speed],
+                        ] as [string, number][]
+                      ).map(([name, value]) => (
+                        <div
+                          key={name}
+                          className="rounded-lg border border-emerald-800/50 bg-emerald-950/30 px-4 py-3"
+                        >
+                          <div className="text-xs text-emerald-400">{name}</div>
+                          <div className="mt-1 text-lg font-semibold text-white">
+                            {formatNumber(value)}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-full text-xs text-emerald-500/70">
+                        Loading...
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

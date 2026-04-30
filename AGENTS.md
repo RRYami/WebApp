@@ -53,7 +53,7 @@ A full-stack quantitative finance platform consisting of:
 ### Rust
 - Use `rust_decimal` and `rust_decimal_macros::dec!` for all monetary/financial arithmetic. **Never use `f64` for money.**
 - The core error type is `pricing_core::Error` (defined in `core/error.rs`). Use `Result<T>` alias.
-- Key traits: `Pricable` (`.price()`), `HasGreeks` (`.greeks()`), `Instrument`.
+- Key traits: `Pricable` (`.price()`), `HasGreeks` (`.greeks()`), `HasSecondOrderGreeks` (`.second_order_greeks()`), `Instrument`.
 - `pricing-core` is a workspace library crate. `pricing-api` depends on it with the `serde` feature enabled.
 - Prefer `thiserror` for error variants.
 - Use `rayon` for parallel Monte Carlo simulations.
@@ -100,11 +100,19 @@ The pricing-api exposes these JSON endpoints:
 
 - `POST /greeks/european-option`
   - Body: same as european-option pricing
-  - Response: `{ delta, gamma, theta, vega, rho, phi }`
+  - Response: `{ delta, gamma, theta, vega, rho }`
 
 - `POST /greeks/american-option`
   - Body: same as american-option pricing
-  - Response: `{ delta, gamma, theta, vega, rho, phi }`
+  - Response: `{ delta, gamma, theta, vega, rho }`
+
+- `POST /greeks/second-order/european-option`
+  - Body: same as european-option pricing
+  - Response: `{ vanna, charm, vomma, speed }`
+
+- `POST /greeks/second-order/american-option`
+  - Body: same as american-option pricing
+  - Response: `{ vanna, charm, vomma, speed }` (currently returns zeros as placeholder)
 
 ## Environment Variables
 

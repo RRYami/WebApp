@@ -15,4 +15,6 @@ pub fn create_router() -> Router {
         .route("/greeks/european-option", post(handlers::greeks_european_option))
         .route("/greeks/american-option", post(handlers::greeks_american_option))
         .route("/greeks/curve", post(handlers::greeks_curve))
+        .route("/greeks/second-order/european-option", post(handlers::second_order_greeks_european_option))
+        .route("/greeks/second-order/american-option", post(handlers::second_order_greeks_american_option))
 }

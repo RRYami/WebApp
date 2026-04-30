@@ -189,6 +189,88 @@ pub struct SecondOrderGreeks {
     pub ultima: f64,
 }
 
+impl SecondOrderGreeks {
+    /// Create a new SecondOrderGreeks struct with the primary higher-order Greeks.
+    pub fn new(vanna: f64, charm: f64, vomma: f64, speed: f64) -> Self {
+        Self {
+            vanna,
+            charm,
+            vomma,
+            speed,
+            veta: 0.0,
+            zomma: 0.0,
+            color: 0.0,
+            ultima: 0.0,
+        }
+    }
+
+    /// Create SecondOrderGreeks with all zeros.
+    pub fn zeros() -> Self {
+        Self {
+            vanna: 0.0,
+            charm: 0.0,
+            vomma: 0.0,
+            speed: 0.0,
+            veta: 0.0,
+            zomma: 0.0,
+            color: 0.0,
+            ultima: 0.0,
+        }
+    }
+
+    /// Scale all second-order Greeks by a factor.
+    pub fn scale(&self, factor: f64) -> Self {
+        Self {
+            vanna: self.vanna * factor,
+            charm: self.charm * factor,
+            vomma: self.vomma * factor,
+            speed: self.speed * factor,
+            veta: self.veta * factor,
+            zomma: self.zomma * factor,
+            color: self.color * factor,
+            ultima: self.ultima * factor,
+        }
+    }
+
+    /// Get vanna (convenience method).
+    pub fn vanna(&self) -> f64 {
+        self.vanna
+    }
+
+    /// Get charm (convenience method).
+    pub fn charm(&self) -> f64 {
+        self.charm
+    }
+
+    /// Get vomma (convenience method).
+    pub fn vomma(&self) -> f64 {
+        self.vomma
+    }
+
+    /// Get speed (convenience method).
+    pub fn speed(&self) -> f64 {
+        self.speed
+    }
+
+    /// Create a summary of the second-order Greeks.
+    pub fn summary(&self) -> String {
+        format!(
+            "Vanna={:+.6} Charm={:+.6} Vomma={:+.6} Speed={:+.6}",
+            self.vanna, self.charm, self.vomma, self.speed
+        )
+    }
+}
+
+impl fmt::Display for SecondOrderGreeks {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "SecondOrderGreeks {{ vanna: {:.6}, charm: {:.6}, vomma: {:.6}, speed: {:.6} }}",
+            self.vanna, self.charm, self.vomma, self.speed
+        )
+    }
+}
+
 /// Portfolio Greeks aggregated across multiple positions.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PortfolioGreeks {

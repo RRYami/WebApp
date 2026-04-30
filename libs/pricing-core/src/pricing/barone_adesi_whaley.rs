@@ -5,7 +5,7 @@ use crate::core::money::Money;
 use crate::core::traits::{HasGreeks, Instrument, Pricable, PricingEngine};
 use crate::instruments::option::{AmericanOption, OptionType};
 use crate::pricing::black_scholes::{ndf, npdf, BlackScholes};
-use crate::risk::greeks::Greeks;
+use crate::risk::greeks::{Greeks, SecondOrderGreeks};
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use rust_decimal::Decimal;
 use rust_decimal::MathematicalOps;
@@ -489,6 +489,22 @@ impl BaroneAdesiWhaley {
         })
     }
 
+    /// Calculate second-order Greeks for an American option.
+    ///
+    /// Placeholder: returns zeros. Numerical cross-derivatives via BAW
+    /// will be implemented in a future pass.
+    pub fn second_order_greeks(
+        _spot: Decimal,
+        _strike: Decimal,
+        _rate: Decimal,
+        _volatility: Decimal,
+        _dividend_yield: Decimal,
+        _time: f64,
+        _option_type: OptionType,
+    ) -> Result<SecondOrderGreeks> {
+        Ok(SecondOrderGreeks::zeros())
+    }
+
     /// Calculate early exercise premium (American - European).
     pub fn early_exercise_premium(
         spot: Decimal,
@@ -602,6 +618,20 @@ impl HasGreeks for AmericanOption {
 
     fn rho(&self) -> Result<f64> {
         self.greeks().map(|g| g.rho)
+    }
+}
+
+impl crate::core::traits::HasSecondOrderGreeks for AmericanOption {
+    fn second_order_greeks(&self) -> Result<SecondOrderGreeks> {
+        BaroneAdesiWhaley::second_order_greeks(
+            self.spot(),
+            self.strike(),
+            self.risk_free_rate(),
+            self.volatility(),
+            self.dividend_yield(),
+            self.time_to_expiry(),
+            self.option_type(),
+        )
     }
 }
 

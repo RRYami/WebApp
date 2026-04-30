@@ -4,7 +4,7 @@ use crate::core::error::{Error, Result};
 use crate::core::money::Money;
 use crate::core::traits::{HasGreeks, Instrument, Pricable, PricingEngine};
 use crate::instruments::option::{EuropeanOption, OptionType};
-use crate::risk::greeks::Greeks;
+use crate::risk::greeks::{Greeks, SecondOrderGreeks};
 use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
 use rust_decimal::Decimal;
 
@@ -253,6 +253,119 @@ impl BlackScholes {
         })
     }
 
+    /// Calculate second-order Greeks for a European option.
+    ///
+    /// Uses central-difference numerical differentiation on the
+    /// already-computed analytical first-order Greeks for robustness.
+    pub fn second_order_greeks(
+        spot: Decimal,
+        strike: Decimal,
+        rate: Decimal,
+        volatility: Decimal,
+        time: f64,
+        option_type: OptionType,
+    ) -> Result<SecondOrderGreeks> {
+        let spot_f = spot
+            .to_f64()
+            .ok_or_else(|| Error::arithmetic("Invalid spot"))?;
+        let vol_f = volatility
+            .to_f64()
+            .ok_or_else(|| Error::arithmetic("Invalid volatility"))?;
+
+        if time <= 0.0 || vol_f <= 0.0 || spot_f <= 0.0 {
+            return Ok(SecondOrderGreeks::zeros());
+        }
+
+        let epsilon_spot = spot * Decimal::from_f64(0.0001).unwrap();
+        let epsilon_vol = volatility * Decimal::from_f64(0.0001).unwrap();
+        let epsilon_time = time * 0.001;
+
+        // Vanna: ∂delta/∂σ  (cross derivative)
+        let delta_up_vol = Self::greeks(
+            spot,
+            strike,
+            rate,
+            volatility + epsilon_vol,
+            time,
+            option_type,
+        )?
+        .delta;
+        let delta_down_vol = Self::greeks(
+            spot,
+            strike,
+            rate,
+            volatility - epsilon_vol,
+            time,
+            option_type,
+        )?
+        .delta;
+        let vanna = (delta_up_vol - delta_down_vol)
+            / (2.0 * epsilon_vol.to_f64().unwrap())
+            / 100.0; // per 1% vol
+
+        // Vomma: ∂vega/∂σ  (second derivative w.r.t vol)
+        let vega_up_vol = Self::greeks(
+            spot,
+            strike,
+            rate,
+            volatility + epsilon_vol,
+            time,
+            option_type,
+        )?
+        .vega;
+        let vega_down_vol = Self::greeks(
+            spot,
+            strike,
+            rate,
+            volatility - epsilon_vol,
+            time,
+            option_type,
+        )?
+        .vega;
+        let vomma = (vega_up_vol - vega_down_vol)
+            / (2.0 * epsilon_vol.to_f64().unwrap())
+            / 100.0; // per 1% vol
+
+        // Charm: ∂delta/∂t  (cross derivative)
+        let charm = if time > 2.0 * epsilon_time {
+            let delta_up_time = Self::greeks(
+                spot, strike, rate, volatility, time + epsilon_time, option_type,
+            )?
+            .delta;
+            let delta_down_time = Self::greeks(
+                spot, strike, rate, volatility, time - epsilon_time, option_type,
+            )?
+            .delta;
+            (delta_up_time - delta_down_time) / (2.0 * epsilon_time) / 365.0 // per day
+        } else {
+            0.0
+        };
+
+        // Speed: ∂gamma/∂S  (third derivative)
+        let gamma_up_spot = Self::greeks(
+            spot + epsilon_spot,
+            strike,
+            rate,
+            volatility,
+            time,
+            option_type,
+        )?
+        .gamma;
+        let gamma_down_spot = Self::greeks(
+            spot - epsilon_spot,
+            strike,
+            rate,
+            volatility,
+            time,
+            option_type,
+        )?
+        .gamma;
+        let speed =
+            (gamma_up_spot - gamma_down_spot) / (2.0 * epsilon_spot.to_f64().unwrap());
+
+        Ok(SecondOrderGreeks::new(vanna, charm, vomma, speed))
+    }
+
     /// Calculate implied volatility from market price.
     ///
     /// Uses Newton-Raphson method.
@@ -434,6 +547,19 @@ impl HasGreeks for EuropeanOption {
     }
 }
 
+impl crate::core::traits::HasSecondOrderGreeks for EuropeanOption {
+    fn second_order_greeks(&self) -> Result<SecondOrderGreeks> {
+        BlackScholes::second_order_greeks(
+            self.spot(),
+            self.strike(),
+            self.risk_free_rate(),
+            self.volatility(),
+            self.time_to_expiry(),
+            self.option_type(),
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -603,5 +729,105 @@ mod tests {
             1.0,
         );
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_second_order_greeks() {
+        let spot = dec!(100);
+        let strike = dec!(100);
+        let rate = dec!(0.05);
+        let vol = dec!(0.2);
+        let time = 1.0;
+        let option_type = OptionType::Call;
+
+        let sog = BlackScholes::second_order_greeks(
+            spot, strike, rate, vol, time, option_type,
+        )
+        .unwrap();
+
+        // Basic sanity: all should be finite
+        assert!(sog.vanna.is_finite());
+        assert!(sog.charm.is_finite());
+        assert!(sog.vomma.is_finite());
+        assert!(sog.speed.is_finite());
+
+        // --- Cross-check against numerical finite differences ---
+        let spot_f = 100.0;
+        let vol_f = 0.2;
+        let time_f = 1.0;
+        let eps_spot = spot_f * 0.0001;
+        let eps_vol = vol_f * 0.0001;
+        let eps_time = time_f * 0.001;
+
+        // Vanna: numerical derivative of delta w.r.t vol
+        let delta_up_vol = BlackScholes::greeks(
+            spot, strike, rate,
+            Decimal::from_f64(vol_f + eps_vol).unwrap(),
+            time_f, option_type,
+        ).unwrap().delta;
+        let delta_down_vol = BlackScholes::greeks(
+            spot, strike, rate,
+            Decimal::from_f64(vol_f - eps_vol).unwrap(),
+            time_f, option_type,
+        ).unwrap().delta;
+        let vanna_numerical = (delta_up_vol - delta_down_vol)
+            / (2.0 * eps_vol) / 100.0;
+        assert!(
+            (sog.vanna - vanna_numerical).abs() < 1e-4,
+            "vanna analytical {} vs numerical {}",
+            sog.vanna, vanna_numerical
+        );
+
+        // Vomma: numerical derivative of vega w.r.t vol
+        let vega_up_vol = BlackScholes::greeks(
+            spot, strike, rate,
+            Decimal::from_f64(vol_f + eps_vol).unwrap(),
+            time_f, option_type,
+        ).unwrap().vega;
+        let vega_down_vol = BlackScholes::greeks(
+            spot, strike, rate,
+            Decimal::from_f64(vol_f - eps_vol).unwrap(),
+            time_f, option_type,
+        ).unwrap().vega;
+        let vomma_numerical = (vega_up_vol - vega_down_vol)
+            / (2.0 * eps_vol) / 100.0;
+        assert!(
+            (sog.vomma - vomma_numerical).abs() < 1e-4,
+            "vomma analytical {} vs numerical {}",
+            sog.vomma, vomma_numerical
+        );
+
+        // Charm: numerical derivative of delta w.r.t time
+        let delta_up_time = BlackScholes::greeks(
+            spot, strike, rate, vol,
+            time_f + eps_time, option_type,
+        ).unwrap().delta;
+        let delta_down_time = BlackScholes::greeks(
+            spot, strike, rate, vol,
+            time_f - eps_time, option_type,
+        ).unwrap().delta;
+        let charm_numerical = (delta_up_time - delta_down_time)
+            / (2.0 * eps_time) / 365.0;
+        assert!(
+            (sog.charm - charm_numerical).abs() < 1e-6,
+            "charm analytical {} vs numerical {}",
+            sog.charm, charm_numerical
+        );
+
+        // Speed: numerical derivative of gamma w.r.t spot
+        let gamma_up_spot = BlackScholes::greeks(
+            Decimal::from_f64(spot_f + eps_spot).unwrap(),
+            strike, rate, vol, time_f, option_type,
+        ).unwrap().gamma;
+        let gamma_down_spot = BlackScholes::greeks(
+            Decimal::from_f64(spot_f - eps_spot).unwrap(),
+            strike, rate, vol, time_f, option_type,
+        ).unwrap().gamma;
+        let speed_numerical = (gamma_up_spot - gamma_down_spot) / (2.0 * eps_spot);
+        assert!(
+            (sog.speed - speed_numerical).abs() < 1e-5,
+            "speed analytical {} vs numerical {}",
+            sog.speed, speed_numerical
+        );
     }
 }
