@@ -1,10 +1,13 @@
 use axum::{extract::Json, http::StatusCode, response::IntoResponse};
 use pricing_core::{AmericanOption, EuropeanOption, OptionType, Pricable, HasGreeks, HasSecondOrderGreeks, BaroneAdesiWhaley};
 
+use crate::dispatch;
 use crate::models::{
-    AmericanOptionRequest, CurveRequest, ErrorResponse, EuropeanOptionRequest, GreeksCurvePoint,
-    GreeksCurveResponse, GreeksResponse, PriceCurvePoint, PriceCurveResponse, PriceResponse,
-    SecondOrderGreeksResponse,
+    AmericanOptionRequest, CurveRequest, ErrorResponse, EuropeanOptionRequest, GenericAnalyticsRequest,
+    GenericCurveRequest, GenericGreeksCurveResponse, GenericGreeksResponse, GenericPriceCurveResponse,
+    GenericPriceResponse, GenericSecondOrderGreeksCurveResponse, GenericSecondOrderGreeksResponse,
+    GreeksCurvePoint, GreeksCurveResponse, GreeksResponse, PriceCurvePoint, PriceCurveResponse,
+    PriceResponse, ProductCatalogResponse, SecondOrderGreeksResponse,
 };
 
 pub async fn health() -> &'static str {
@@ -311,6 +314,91 @@ pub async fn greeks_curve(
     };
 
     Ok(Json(GreeksCurveResponse { points: points? }))
+}
+
+// ------------------------------------------------------------------
+// Generic product-driven handlers
+// ------------------------------------------------------------------
+
+pub async fn product_catalog() -> Json<ProductCatalogResponse> {
+    Json(dispatch::product_catalog())
+}
+
+pub async fn generic_price(
+    Json(req): Json<GenericAnalyticsRequest>,
+) -> Result<Json<GenericPriceResponse>, AppError> {
+    let instrument = dispatch::build_instrument(&req.product, &req.parameters)?;
+    let price = dispatch::dispatch_price(instrument.as_ref())?;
+    Ok(Json(GenericPriceResponse {
+        price: price.amount(),
+        currency: price.currency().to_string(),
+    }))
+}
+
+pub async fn generic_greeks(
+    Json(req): Json<GenericAnalyticsRequest>,
+) -> Result<Json<GenericGreeksResponse>, AppError> {
+    let instrument = dispatch::build_instrument(&req.product, &req.parameters)?;
+    let greeks = dispatch::dispatch_greeks(instrument.as_ref())?;
+    Ok(Json(GenericGreeksResponse {
+        delta: greeks.delta,
+        gamma: greeks.gamma,
+        theta: greeks.theta,
+        vega: greeks.vega,
+        rho: greeks.rho,
+    }))
+}
+
+pub async fn generic_second_order_greeks(
+    Json(req): Json<GenericAnalyticsRequest>,
+) -> Result<Json<GenericSecondOrderGreeksResponse>, AppError> {
+    let instrument = dispatch::build_instrument(&req.product, &req.parameters)?;
+    let sog = dispatch::dispatch_second_order_greeks(instrument.as_ref())?;
+    Ok(Json(GenericSecondOrderGreeksResponse {
+        vanna: sog.vanna,
+        charm: sog.charm,
+        vomma: sog.vomma,
+        speed: sog.speed,
+    }))
+}
+
+pub async fn generic_price_curve(
+    Json(req): Json<GenericCurveRequest>,
+) -> Result<Json<GenericPriceCurveResponse>, AppError> {
+    let resp = dispatch::generic_price_curve(
+        &req.product,
+        &req.parameters,
+        req.strikes,
+        req.spots,
+        req.fixed_strike,
+    )?;
+    Ok(Json(resp))
+}
+
+pub async fn generic_greeks_curve(
+    Json(req): Json<GenericCurveRequest>,
+) -> Result<Json<GenericGreeksCurveResponse>, AppError> {
+    let resp = dispatch::generic_greeks_curve(
+        &req.product,
+        &req.parameters,
+        req.strikes,
+        req.spots,
+        req.fixed_strike,
+    )?;
+    Ok(Json(resp))
+}
+
+pub async fn generic_second_order_greeks_curve(
+    Json(req): Json<GenericCurveRequest>,
+) -> Result<Json<GenericSecondOrderGreeksCurveResponse>, AppError> {
+    let resp = dispatch::generic_second_order_greeks_curve(
+        &req.product,
+        &req.parameters,
+        req.strikes,
+        req.spots,
+        req.fixed_strike,
+    )?;
+    Ok(Json(resp))
 }
 
 fn parse_option_type(s: &str) -> Result<OptionType, AppError> {

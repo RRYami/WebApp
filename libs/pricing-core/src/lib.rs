@@ -64,7 +64,7 @@ pub use core::{
     error::{Error, Result},
     interest_rate::{Compounding, InterestRate},
     money::Money,
-    traits::{HasGreeks, HasSecondOrderGreeks, Pricable},
+    traits::{HasGreeks, HasSecondOrderGreeks, Instrument, Pricable},
 };
 
 pub use instruments::{

@@ -114,6 +114,35 @@ The pricing-api exposes these JSON endpoints:
   - Body: same as american-option pricing
   - Response: `{ vanna, charm, vomma, speed }` (currently returns zeros as placeholder)
 
+### Generic Product-Driven Endpoints
+
+- `GET /api/products`
+  - Response: `{ products: [{ id, name, category, parameters, analytics }] }`
+
+- `POST /api/analytics/price`
+  - Body: `{ product, parameters: { ... } }`
+  - Response: `{ price, currency }`
+
+- `POST /api/analytics/greeks`
+  - Body: `{ product, parameters: { ... } }`
+  - Response: `{ delta, gamma, theta, vega, rho }`
+
+- `POST /api/analytics/second-order-greeks`
+  - Body: `{ product, parameters: { ... } }`
+  - Response: `{ vanna, charm, vomma, speed }`
+
+- `POST /api/analytics/curve/price`
+  - Body: `{ product, parameters, strikes?, spots?, fixed_strike? }`
+  - Response: `{ currency, points: [{ x, price }] }`
+
+- `POST /api/analytics/curve/greeks`
+  - Body: same as curve/price
+  - Response: `{ points: [{ x, delta, gamma, theta, vega, rho }] }`
+
+- `POST /api/analytics/curve/second-order-greeks`
+  - Body: same as curve/price
+  - Response: `{ points: [{ x, vanna, charm, vomma, speed }] }`
+
 ## Environment Variables
 
 Copy `.env.example` to `.env` at the project root and set:

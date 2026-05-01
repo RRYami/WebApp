@@ -1,3 +1,4 @@
+mod dispatch;
 mod handlers;
 mod models;
 mod routes;
