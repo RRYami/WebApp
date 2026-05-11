@@ -7,7 +7,6 @@ This file contains project-specific instructions for AI agents working on this c
 A full-stack quantitative finance platform consisting of:
 - `libs/pricing-core`: Rust library for option/bond pricing and risk (Greeks).
 - `services/pricing-api`: Axum HTTP API wrapping `pricing-core`.
-- `services/data-ingestion`: Python service ingesting market data into TimescaleDB.
 - `web`: React + Vite + TypeScript frontend.
 - `infra/docker`: Docker Compose orchestration.
 - `infra/db/migrations`: TimescaleDB SQL migrations.
@@ -27,16 +26,6 @@ A full-stack quantitative finance platform consisting of:
 - **Clippy**: `cargo clippy --all-targets --all-features`
 - **Fmt**: `cargo fmt`
 - **MSRV**: Rust 1.78
-
-### Python (data-ingestion)
-- **Install**: `uv pip install -e ".[dev]"`
-- **Run scheduler**: `python -m ingestion.scheduler`
-- **Run pipeline on-demand**: `uv run pipeline cpi` or `uv run pipeline yield-curve`
-- **Lint**: `ruff check .`
-- **Format**: `ruff format .`
-- **Test**: `pytest` (skips integration tests by default)
-- **Integration tests**: `pytest -m integration` (requires live FRED_API_KEY)
-- **Line length**: 100
 
 ### Web (React/TypeScript)
 - **Install**: `npm install`
@@ -62,15 +51,6 @@ A full-stack quantitative finance platform consisting of:
   - `instruments/` — Bond, EuropeanOption, AmericanOption
   - `pricing/` — BlackScholes, BinomialModel, BaroneAdesiWhaley, MonteCarlo, EngineRegistry
   - `risk/` — Greeks
-
-### Python
-- Uses Pydantic Settings (`ingestion/config.py`) for env-based config.
-- SQLAlchemy 2.0 models in `ingestion/db/models.py`.
-- Scheduler entry point: `ingestion/scheduler.py` (APScheduler).
-- Data sources: `ingestion/sources/fred.py`, `ingestion/sources/databento.py`.
-- Pipelines: `ingestion/pipelines/equities.py`, `ingestion/pipelines/options.py`, `ingestion/pipelines/yield_curve.py`, `ingestion/pipelines/cpi.py`.
-- Logging: `ingestion/logging_config.py` sets up `structlog` bridged to stdlib `logging`. Console output is plain text (INFO+); file output is JSON Lines via `RotatingFileHandler` (DEBUG+, 5 MB rotation, 3 backups). Entry points must call `setup_logging(settings.log_level, settings.log_file_path)` before any log emissions.
-- Keep line length ≤ 100.
 
 ### Database
 - TimescaleDB (PostgreSQL 16) with automatic hypertable creation via migrations.
@@ -149,10 +129,7 @@ Copy `.env.example` to `.env` at the project root and set:
 
 - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
 - `DATABASE_URL`
-- `FRED_API_KEY`
-- `DATABENTO_API_KEY`
 - `LOG_LEVEL`
-- `LOG_FILE_PATH` (default: `services/data-ingestion/logs/app.log.jsonl`)
 
 > `.env` is gitignored. Never commit real secrets.
 
@@ -162,12 +139,9 @@ Copy `.env.example` to `.env` at the project root and set:
 2. **Feature flags**: `pricing-core` has an optional `serde` feature. Enable it when the consumer needs serialization (e.g., `pricing-api`).
 3. **Migrations**: SQL files in `infra/db/migrations/` run in lexicographic order on container startup. Name new migrations with zero-padded prefixes (e.g., `006_...sql`).
 4. **Adding a new instrument**: Implement `Instrument` + `Pricable` (+ `HasGreeks` if applicable). Add to `prelude` and re-export in `lib.rs`.
-5. **Adding a new pipeline**: Create a pipeline in `ingestion/pipelines/`, register it in `ingestion/scheduler.py`.
-6. **API handlers**: Keep HTTP logic in `handlers.rs`, routing in `routes.rs`, and request/response DTOs in `models.rs`.
-7. **Tests**: Add unit tests next to the code, integration tests in `tests/`, and benchmarks in `benches/`.
-8. **Documentation**: The `libs/pricing-core/docs/` directory is for learning materials. Do not delete or move these files unless explicitly asked.
-9. **Docker builds**: The Rust API Dockerfile copies from the repo root context so it can access `libs/pricing-core`. The Python and web Dockerfiles use their own directories as context.
-10. **Docker env file**: Always run compose with `--env-file ../../.env` from `infra/docker/`. The `.env` must live at the repo root.
-11. **Pipeline bulk inserts**: Use chunked bulk inserts (e.g., 1,000 rows per commit) for TimescaleDB hypertables to avoid `out of shared memory` errors.
-12. **Logging initialization**: `setup_logging()` must be called once at every Python entry point (`cli.py`, `scheduler.py`, tests). Never configure logging at import time.
-13. **Git safety**: Do not run `git commit`, `git push`, or destructive git commands unless explicitly requested.
+5. **API handlers**: Keep HTTP logic in `handlers.rs`, routing in `routes.rs`, and request/response DTOs in `models.rs`.
+6. **Tests**: Add unit tests next to the code, integration tests in `tests/`, and benchmarks in `benches/`.
+7. **Documentation**: The `libs/pricing-core/docs/` directory is for learning materials. Do not delete or move these files unless explicitly asked.
+8. **Docker builds**: The Rust API Dockerfile copies from the repo root context so it can access `libs/pricing-core`. The web Dockerfile uses its own directory as context.
+9. **Docker env file**: Always run compose with `--env-file ../../.env` from `infra/docker/`. The `.env` must live at the repo root.
+10. **Git safety**: Do not run `git commit`, `git push`, or destructive git commands unless explicitly requested.

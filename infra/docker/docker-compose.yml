@@ -33,19 +33,6 @@ services:
       timescaledb:
         condition: service_healthy
 
-  data-ingestion:
-    build:
-      context: ../../services/data-ingestion
-      dockerfile: Dockerfile
-    env_file:
-      - ../../.env
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@timescaledb:5432/${POSTGRES_DB:-pricing}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    depends_on:
-      timescaledb:
-        condition: service_healthy
-
   web:
     build:
       context: ../../web

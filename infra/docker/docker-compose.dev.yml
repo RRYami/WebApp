@@ -12,19 +12,6 @@ services:
     environment:
       RUST_LOG: debug
 
-  data-ingestion:
-    image: python:3.12-slim-bookworm
-    working_dir: /app
-    volumes:
-      - ../../services/data-ingestion:/app
-    command: >
-      sh -c "pip install -e . && python -m ingestion.scheduler"
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@timescaledb:5432/${POSTGRES_DB:-pricing}
-      FRED_API_KEY: ${FRED_API_KEY:-}
-      DATABENTO_API_KEY: ${DATABENTO_API_KEY:-}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-
   web:
     image: node:22-slim
     working_dir: /app

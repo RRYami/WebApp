@@ -1,6 +1,6 @@
 # Pricing Platform
 
-A full-stack financial pricing and risk platform for derivatives and fixed income instruments, built with Rust, Python, and React.
+A full-stack financial pricing and risk platform for derivatives and fixed income instruments, built with Rust and React.
 
 ## Overview
 
@@ -8,7 +8,6 @@ This project provides a complete quantitative finance stack:
 
 - **pricing-core** — High-performance Rust library for pricing options (Black-Scholes, Barone-Adesi-Whaley, Binomial, Monte Carlo), bonds, and computing Greeks.
 - **pricing-api** — Axum-based HTTP API exposing pricing endpoints.
-- **data-ingestion** — Python service that ingests market data from FRED and Databento into TimescaleDB.
 - **web** — React + Vite + TypeScript frontend.
 
 ## Architecture
@@ -19,7 +18,6 @@ pricing_platform/
 │   └── pricing-core/          # Rust quantitative finance library
 ├── services/
 │   ├── pricing-api/           # Rust HTTP API (Axum)
-│   └── data-ingestion/        # Python ingestion service
 ├── web/                       # React frontend
 ├── infra/
 │   ├── docker/                # Docker Compose manifests
@@ -32,8 +30,6 @@ pricing_platform/
 |-----------|------------|
 | Pricing Engine | Rust, `rust_decimal`, `rayon`, `rand` |
 | API | Rust, Axum, Tokio |
-| Data Ingestion | Python 3.12, SQLAlchemy, APScheduler, `httpx`, `structlog` |
-| Logging | `structlog` + stdlib `logging`, JSON Lines file output, plain-text console |
 | Frontend | React 18, TypeScript, Vite |
 | Database | TimescaleDB (PostgreSQL 16) |
 | Deployment | Docker, Docker Compose, Nginx |
@@ -44,16 +40,14 @@ pricing_platform/
 
 - [Docker](https://docs.docker.com/get-docker/) & Docker Compose
 - (Optional) [Rust](https://rustup.rs/) 1.78+ for local library development
-- (Optional) [uv](https://docs.astral.sh/uv/) for local Python development
 - (Optional) [Node.js](https://nodejs.org/) 22+ for local frontend development
 
 ### Environment Setup
 
-Copy the example environment file to the project root and configure your API keys:
+Copy the example environment file to the project root:
 
 ```bash
 cp .env.example .env
-# Edit .env with your FRED and Databento API keys
 ```
 
 > **Security note:** `.env` is gitignored and must never be committed. It should contain your real secrets.
@@ -63,7 +57,6 @@ The `.env` file also controls logging:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `LOG_LEVEL` | `INFO` | Root log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `LOG_FILE_PATH` | `services/data-ingestion/logs/app.log.jsonl` | Path to the JSON Lines log file |
 
 ### Run with Docker Compose
 
@@ -76,7 +69,6 @@ This starts:
 
 - **TimescaleDB** on port `5432`
 - **Pricing API** on port `3000`
-- **Data Ingestion** service (scheduler)
 - **Web** frontend on port `80`
 - **pgAdmin** on port `5050`
 
@@ -152,40 +144,6 @@ cargo run
 # API will be available at http://localhost:3000
 ```
 
-### data-ingestion (Python)
-
-```bash
-cd services/data-ingestion
-
-# Install dependencies with uv
-uv pip install -e ".[dev]"
-
-# Run the scheduler (inside Docker or locally)
-python -m ingestion.scheduler
-
-# Run a pipeline on-demand
-uv run pipeline cpi
-uv run pipeline yield-curve
-uv run pipeline cpi --series-id CPIAUCSL
-
-# Format / lint
-ruff check .
-ruff format .
-
-# Run tests (skips integration tests by default)
-pytest
-
-# Run integration tests (hits live FRED API — requires FRED_API_KEY)
-pytest -m integration
-```
-
-**Logging:**
-
-- Console output is plain text (`INFO` and above) for readability during development.
-- File output is JSON Lines (`DEBUG` and above) with automatic rotation (5 MB, 3 backups).
-- Log files are written to the path configured by `LOG_FILE_PATH` (default: `services/data-ingestion/logs/app.log.jsonl`).
-- `structlog` key-value pairs (e.g. `logger.info("Fetched data", records=150)`) are automatically included in the JSON output.
-
 ### web (React)
 
 ```bash
@@ -227,15 +185,6 @@ pricing_platform/
 │       ├── routes.rs
 │       ├── handlers.rs
 │       └── models.rs
-├── services/data-ingestion/
-│   └── ingestion/
-│       ├── config.py
-│       ├── logging_config.py
-│       ├── scheduler.py
-│       ├── cli.py
-│       ├── db/
-│       ├── pipelines/
-│       └── sources/
 ├── web/
 │   └── src/
 │       ├── App.tsx
@@ -269,7 +218,7 @@ docker compose --env-file ../../.env up --build
 
 ### Out of shared memory (PostgreSQL)
 
-If queries or pipelines fail with `out of shared memory`, the default PostgreSQL lock limits are too low for TimescaleDB hypertables. The `docker-compose.yml` already tunes these settings:
+If queries fail with `out of shared memory`, the default PostgreSQL lock limits are too low for TimescaleDB hypertables. The `docker-compose.yml` already tunes these settings:
 
 ```yaml
 command: >
@@ -284,15 +233,6 @@ If you changed `docker-compose.yml` after the DB was initialized, wipe the volum
 ```bash
 cd infra/docker
 docker compose down -v
-docker compose --env-file ../../.env up --build
-```
-
-### FRED API key not found
-
-Ensure `.env` is at the **project root** (not inside `infra/docker/`). The compose command must include `--env-file ../../.env`:
-
-```bash
-cd infra/docker
 docker compose --env-file ../../.env up --build
 ```
 
