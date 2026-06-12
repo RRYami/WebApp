@@ -3,16 +3,15 @@ use std::str::FromStr;
 
 use pricing_core::{AmericanOption, EuropeanOption, Instrument, OptionType};
 use pricing_core::{HasGreeks, HasSecondOrderGreeks, Pricable};
-use rust_decimal::Decimal;
 use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::Decimal;
 
+use crate::handlers::AppError;
 use crate::models::{
     GenericGreeksCurvePoint, GenericGreeksCurveResponse, GenericPriceCurvePoint,
     GenericPriceCurveResponse, GenericSecondOrderGreeksCurvePoint,
-    GenericSecondOrderGreeksCurveResponse, ProductCatalogResponse, ProductParameter,
-    ProductSchema,
+    GenericSecondOrderGreeksCurveResponse, ProductCatalogResponse, ProductParameter, ProductSchema,
 };
-use crate::handlers::AppError;
 
 // ------------------------------------------------------------------
 // Product catalog
@@ -30,8 +29,18 @@ pub fn product_catalog() -> ProductCatalogResponse {
                     ProductParameter::decimal("spot", "Spot Price", true),
                     ProductParameter::decimal_pct("risk_free_rate", "Risk-Free Rate", true),
                     ProductParameter::decimal_pct("volatility", "Volatility", true),
-                    ProductParameter::float("time_to_maturity", "Time to Maturity", true, Some("years")),
-                    ProductParameter::choice("option_type", "Option Type", true, vec!["Call", "Put"]),
+                    ProductParameter::float(
+                        "time_to_maturity",
+                        "Time to Maturity",
+                        true,
+                        Some("years"),
+                    ),
+                    ProductParameter::choice(
+                        "option_type",
+                        "Option Type",
+                        true,
+                        vec!["Call", "Put"],
+                    ),
                 ],
                 analytics: vec![
                     "price".to_string(),
@@ -49,8 +58,18 @@ pub fn product_catalog() -> ProductCatalogResponse {
                     ProductParameter::decimal("spot", "Spot Price", true),
                     ProductParameter::decimal_pct("risk_free_rate", "Risk-Free Rate", true),
                     ProductParameter::decimal_pct("volatility", "Volatility", true),
-                    ProductParameter::float("time_to_maturity", "Time to Maturity", true, Some("years")),
-                    ProductParameter::choice("option_type", "Option Type", true, vec!["Call", "Put"]),
+                    ProductParameter::float(
+                        "time_to_maturity",
+                        "Time to Maturity",
+                        true,
+                        Some("years"),
+                    ),
+                    ProductParameter::choice(
+                        "option_type",
+                        "Option Type",
+                        true,
+                        vec!["Call", "Put"],
+                    ),
                     ProductParameter::decimal_pct("dividend_yield", "Dividend Yield", false),
                 ],
                 analytics: vec![
@@ -68,10 +87,13 @@ pub fn product_catalog() -> ProductCatalogResponse {
 // Parameter extraction helpers
 // ------------------------------------------------------------------
 
-fn get_decimal(params: &HashMap<String, serde_json::Value>, key: &str) -> Result<Decimal, AppError> {
-    let val = params.get(key).ok_or_else(|| {
-        AppError::BadRequest(format!("Missing required parameter: {}", key))
-    })?;
+fn get_decimal(
+    params: &HashMap<String, serde_json::Value>,
+    key: &str,
+) -> Result<Decimal, AppError> {
+    let val = params
+        .get(key)
+        .ok_or_else(|| AppError::BadRequest(format!("Missing required parameter: {}", key)))?;
 
     if let Some(s) = val.as_str() {
         Decimal::from_str(s)
@@ -88,9 +110,9 @@ fn get_decimal(params: &HashMap<String, serde_json::Value>, key: &str) -> Result
 }
 
 fn get_f64(params: &HashMap<String, serde_json::Value>, key: &str) -> Result<f64, AppError> {
-    let val = params.get(key).ok_or_else(|| {
-        AppError::BadRequest(format!("Missing required parameter: {}", key))
-    })?;
+    let val = params
+        .get(key)
+        .ok_or_else(|| AppError::BadRequest(format!("Missing required parameter: {}", key)))?;
 
     if let Some(n) = val.as_f64() {
         Ok(n)
@@ -106,9 +128,9 @@ fn get_f64(params: &HashMap<String, serde_json::Value>, key: &str) -> Result<f64
 }
 
 fn get_string(params: &HashMap<String, serde_json::Value>, key: &str) -> Result<String, AppError> {
-    let val = params.get(key).ok_or_else(|| {
-        AppError::BadRequest(format!("Missing required parameter: {}", key))
-    })?;
+    let val = params
+        .get(key)
+        .ok_or_else(|| AppError::BadRequest(format!("Missing required parameter: {}", key)))?;
 
     val.as_str()
         .map(|s| s.to_string())
@@ -125,13 +147,13 @@ fn get_optional_decimal(
         Some(v) if v.as_str() == Some("") => Ok(None),
         Some(v) => {
             if let Some(s) = v.as_str() {
-                Decimal::from_str(s)
-                    .map(Some)
-                    .map_err(|e| AppError::BadRequest(format!("Invalid decimal for {}: {}", key, e)))
+                Decimal::from_str(s).map(Some).map_err(|e| {
+                    AppError::BadRequest(format!("Invalid decimal for {}: {}", key, e))
+                })
             } else if let Some(n) = v.as_f64() {
-                Decimal::from_f64(n)
-                    .map(Some)
-                    .ok_or_else(|| AppError::BadRequest(format!("Invalid decimal for {}: {}", key, n)))
+                Decimal::from_f64(n).map(Some).ok_or_else(|| {
+                    AppError::BadRequest(format!("Invalid decimal for {}: {}", key, n))
+                })
             } else {
                 Err(AppError::BadRequest(format!(
                     "Parameter {} must be a string or number",
@@ -203,7 +225,9 @@ pub fn build_instrument(
 // Trait dispatch
 // ------------------------------------------------------------------
 
-pub fn dispatch_price(instrument: &dyn Instrument) -> Result<pricing_core::core::money::Money, AppError> {
+pub fn dispatch_price(
+    instrument: &dyn Instrument,
+) -> Result<pricing_core::core::money::Money, AppError> {
     if let Some(opt) = instrument.as_any().downcast_ref::<EuropeanOption>() {
         Ok(opt.price()?)
     } else if let Some(opt) = instrument.as_any().downcast_ref::<AmericanOption>() {
@@ -215,7 +239,9 @@ pub fn dispatch_price(instrument: &dyn Instrument) -> Result<pricing_core::core:
     }
 }
 
-pub fn dispatch_greeks(instrument: &dyn Instrument) -> Result<pricing_core::risk::greeks::Greeks, AppError> {
+pub fn dispatch_greeks(
+    instrument: &dyn Instrument,
+) -> Result<pricing_core::risk::greeks::Greeks, AppError> {
     if let Some(opt) = instrument.as_any().downcast_ref::<EuropeanOption>() {
         Ok(opt.greeks()?)
     } else if let Some(opt) = instrument.as_any().downcast_ref::<AmericanOption>() {
@@ -287,16 +313,17 @@ pub fn generic_price_curve(
     fixed_strike: Option<Decimal>,
 ) -> Result<GenericPriceCurveResponse, AppError> {
     let varying_spots = spots.filter(|s| !s.is_empty());
-    let _fixed_strike = fixed_strike.or_else(|| {
-        get_decimal(params, "spot").ok()
-    });
+    let _fixed_strike = fixed_strike.or_else(|| get_decimal(params, "spot").ok());
 
     let points: Vec<GenericPriceCurvePoint> = if let Some(spots) = varying_spots {
         spots
             .into_iter()
             .map(|spot| {
                 let mut p = params.clone();
-                p.insert("spot".to_string(), serde_json::Value::String(spot.to_string()));
+                p.insert(
+                    "spot".to_string(),
+                    serde_json::Value::String(spot.to_string()),
+                );
                 let price = match product {
                     "european-option" => {
                         let opt = build_european_option(&p)?;
@@ -306,9 +333,12 @@ pub fn generic_price_curve(
                         let opt = build_american_option(&p)?;
                         opt.price()?.amount()
                     }
-                    other => return Err(AppError::BadRequest(format!(
-                        "Invalid product for curve: {}", other
-                    ))),
+                    other => {
+                        return Err(AppError::BadRequest(format!(
+                            "Invalid product for curve: {}",
+                            other
+                        )))
+                    }
                 };
                 Ok(GenericPriceCurvePoint { x: spot, price })
             })
@@ -321,7 +351,10 @@ pub fn generic_price_curve(
             .into_iter()
             .map(|strike| {
                 let mut p = params.clone();
-                p.insert("strike".to_string(), serde_json::Value::String(strike.to_string()));
+                p.insert(
+                    "strike".to_string(),
+                    serde_json::Value::String(strike.to_string()),
+                );
                 let price = match product {
                     "european-option" => {
                         let opt = build_european_option(&p)?;
@@ -331,9 +364,12 @@ pub fn generic_price_curve(
                         let opt = build_american_option(&p)?;
                         opt.price()?.amount()
                     }
-                    other => return Err(AppError::BadRequest(format!(
-                        "Invalid product for curve: {}", other
-                    ))),
+                    other => {
+                        return Err(AppError::BadRequest(format!(
+                            "Invalid product for curve: {}",
+                            other
+                        )))
+                    }
                 };
                 Ok(GenericPriceCurvePoint { x: strike, price })
             })
@@ -355,16 +391,17 @@ pub fn generic_greeks_curve(
     fixed_strike: Option<Decimal>,
 ) -> Result<GenericGreeksCurveResponse, AppError> {
     let varying_spots = spots.filter(|s| !s.is_empty());
-    let _fixed_strike = fixed_strike.or_else(|| {
-        get_decimal(params, "spot").ok()
-    });
+    let _fixed_strike = fixed_strike.or_else(|| get_decimal(params, "spot").ok());
 
     let points: Vec<GenericGreeksCurvePoint> = if let Some(spots) = varying_spots {
         spots
             .into_iter()
             .map(|spot| {
                 let mut p = params.clone();
-                p.insert("spot".to_string(), serde_json::Value::String(spot.to_string()));
+                p.insert(
+                    "spot".to_string(),
+                    serde_json::Value::String(spot.to_string()),
+                );
                 let greeks = match product {
                     "european-option" => {
                         let opt = build_european_option(&p)?;
@@ -374,9 +411,12 @@ pub fn generic_greeks_curve(
                         let opt = build_american_option(&p)?;
                         opt.greeks()?
                     }
-                    other => return Err(AppError::BadRequest(format!(
-                        "Invalid product for curve: {}", other
-                    ))),
+                    other => {
+                        return Err(AppError::BadRequest(format!(
+                            "Invalid product for curve: {}",
+                            other
+                        )))
+                    }
                 };
                 Ok(GenericGreeksCurvePoint {
                     x: spot,
@@ -396,7 +436,10 @@ pub fn generic_greeks_curve(
             .into_iter()
             .map(|strike| {
                 let mut p = params.clone();
-                p.insert("strike".to_string(), serde_json::Value::String(strike.to_string()));
+                p.insert(
+                    "strike".to_string(),
+                    serde_json::Value::String(strike.to_string()),
+                );
                 let greeks = match product {
                     "european-option" => {
                         let opt = build_european_option(&p)?;
@@ -406,9 +449,12 @@ pub fn generic_greeks_curve(
                         let opt = build_american_option(&p)?;
                         opt.greeks()?
                     }
-                    other => return Err(AppError::BadRequest(format!(
-                        "Invalid product for curve: {}", other
-                    ))),
+                    other => {
+                        return Err(AppError::BadRequest(format!(
+                            "Invalid product for curve: {}",
+                            other
+                        )))
+                    }
                 };
                 Ok(GenericGreeksCurvePoint {
                     x: strike,
@@ -434,16 +480,17 @@ pub fn generic_second_order_greeks_curve(
     fixed_strike: Option<Decimal>,
 ) -> Result<GenericSecondOrderGreeksCurveResponse, AppError> {
     let varying_spots = spots.filter(|s| !s.is_empty());
-    let _fixed_strike = fixed_strike.or_else(|| {
-        get_decimal(params, "spot").ok()
-    });
+    let _fixed_strike = fixed_strike.or_else(|| get_decimal(params, "spot").ok());
 
     let points: Vec<GenericSecondOrderGreeksCurvePoint> = if let Some(spots) = varying_spots {
         spots
             .into_iter()
             .map(|spot| {
                 let mut p = params.clone();
-                p.insert("spot".to_string(), serde_json::Value::String(spot.to_string()));
+                p.insert(
+                    "spot".to_string(),
+                    serde_json::Value::String(spot.to_string()),
+                );
                 let sog = match product {
                     "european-option" => {
                         let opt = build_european_option(&p)?;
@@ -453,9 +500,12 @@ pub fn generic_second_order_greeks_curve(
                         let opt = build_american_option(&p)?;
                         opt.second_order_greeks()?
                     }
-                    other => return Err(AppError::BadRequest(format!(
-                        "Invalid product for curve: {}", other
-                    ))),
+                    other => {
+                        return Err(AppError::BadRequest(format!(
+                            "Invalid product for curve: {}",
+                            other
+                        )))
+                    }
                 };
                 Ok(GenericSecondOrderGreeksCurvePoint {
                     x: spot,
@@ -474,7 +524,10 @@ pub fn generic_second_order_greeks_curve(
             .into_iter()
             .map(|strike| {
                 let mut p = params.clone();
-                p.insert("strike".to_string(), serde_json::Value::String(strike.to_string()));
+                p.insert(
+                    "strike".to_string(),
+                    serde_json::Value::String(strike.to_string()),
+                );
                 let sog = match product {
                     "european-option" => {
                         let opt = build_european_option(&p)?;
@@ -484,9 +537,12 @@ pub fn generic_second_order_greeks_curve(
                         let opt = build_american_option(&p)?;
                         opt.second_order_greeks()?
                     }
-                    other => return Err(AppError::BadRequest(format!(
-                        "Invalid product for curve: {}", other
-                    ))),
+                    other => {
+                        return Err(AppError::BadRequest(format!(
+                            "Invalid product for curve: {}",
+                            other
+                        )))
+                    }
                 };
                 Ok(GenericSecondOrderGreeksCurvePoint {
                     x: strike,

@@ -32,6 +32,7 @@
 //! }
 //! ```
 
+pub mod calibration;
 pub mod core;
 pub mod instruments;
 pub mod pricing;
@@ -40,6 +41,7 @@ pub mod utils;
 
 /// Prelude module for convenient imports
 pub mod prelude {
+    pub use crate::calibration::{heston::*, MarketQuote};
     pub use crate::core::{
         currency::*,
         day_count::*,
@@ -50,7 +52,7 @@ pub mod prelude {
     };
     pub use crate::instruments::{bond::*, option::*};
     pub use crate::pricing::{
-        barone_adesi_whaley::*, binomial::*, black_scholes::*, engine::*, monte_carlo::*,
+        barone_adesi_whaley::*, binomial::*, black_scholes::*, engine::*, heston::*, monte_carlo::*,
     };
     pub use crate::risk::greeks::*;
     pub use rust_decimal::prelude::*;
@@ -77,7 +79,13 @@ pub use pricing::{
     binomial::{BinomialModel, BinomialTree},
     black_scholes::BlackScholes,
     engine::{EngineRegistry, PricingEngine},
+    heston::{Heston, HestonParams},
     monte_carlo::{GreeksWithUncertainty, MonteCarlo, MonteCarloResult, VarianceStats},
+};
+
+pub use calibration::{
+    heston::{CalibrationConfig, CalibrationResult, HestonCalibrator},
+    MarketQuote,
 };
 
 pub use risk::greeks::{Greeks, SecondOrderGreeks};

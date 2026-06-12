@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
@@ -91,6 +92,54 @@ pub struct SecondOrderGreeksResponse {
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     pub error: String,
+}
+
+// ------------------------------------------------------------------
+// Heston model
+// ------------------------------------------------------------------
+
+/// Heston model parameters as they appear on the wire.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+pub struct HestonParamsDto {
+    pub v0: f64,
+    pub kappa: f64,
+    pub theta: f64,
+    pub sigma: f64,
+    pub rho: f64,
+}
+
+/// Request to price a vanilla option under user-supplied Heston parameters.
+#[derive(Debug, Deserialize)]
+pub struct HestonOptionRequest {
+    pub strike: Decimal,
+    pub spot: Decimal,
+    pub risk_free_rate: Decimal,
+    pub time_to_maturity: f64,
+    pub option_type: String,
+    pub heston_params: HestonParamsDto,
+}
+
+/// Request to calibrate Heston parameters from stored market quotes.
+#[derive(Debug, Deserialize)]
+pub struct CalibrateHestonRequest {
+    /// Underlying symbol to load quotes for from `options_data`.
+    pub symbol: String,
+    pub spot: Decimal,
+    pub risk_free_rate: Decimal,
+    /// Calibration timestamp; defaults to now. The latest quote at or before
+    /// this time is used for each contract.
+    pub as_of: Option<DateTime<Utc>>,
+    /// Optional optimiser starting point.
+    pub initial_guess: Option<HestonParamsDto>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CalibrateHestonResponse {
+    pub params: HestonParamsDto,
+    pub rmse: f64,
+    pub iterations: usize,
+    pub converged: bool,
+    pub quotes_used: usize,
 }
 
 // ------------------------------------------------------------------

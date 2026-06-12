@@ -49,8 +49,11 @@ A full-stack quantitative finance platform consisting of:
 - Module layout:
   - `core/` — foundational types (Money, Currency, InterestRate, DayCountConvention, errors, traits)
   - `instruments/` — Bond, EuropeanOption, AmericanOption
-  - `pricing/` — BlackScholes, BinomialModel, BaroneAdesiWhaley, MonteCarlo, EngineRegistry
+  - `pricing/` — BlackScholes, BinomialModel, BaroneAdesiWhaley, Heston, MonteCarlo, EngineRegistry
+  - `calibration/` — MarketQuote, HestonCalibrator (Nelder-Mead fit against vanilla quotes)
   - `risk/` — Greeks
+- Heston model parameters (`HestonParams`: v0, kappa, theta, sigma, rho) are `f64` — they are model parameters, not monetary values. Monetary inputs/outputs stay `Decimal`.
+- Calibration is pure and synchronous in `pricing-core`; quote loading (Postgres) lives in `pricing-api` (`src/db.rs`).
 
 ### Database
 - TimescaleDB (PostgreSQL 16) with automatic hypertable creation via migrations.
@@ -77,6 +80,16 @@ The pricing-api exposes these JSON endpoints:
 - `POST /price/baw-american-option`
   - Body: same as american-option pricing
   - Response: `{ price, currency }`
+
+- `POST /price/heston-option`
+  - Body: `{ strike, spot, risk_free_rate, time_to_maturity, option_type, heston_params: { v0, kappa, theta, sigma, rho } }`
+  - Response: `{ price, currency }`
+  - Prices a European vanilla option with user-supplied Heston parameters. No database required.
+
+- `POST /calibrate/heston`
+  - Body: `{ symbol, spot, risk_free_rate, as_of?, initial_guess? }`
+  - Response: `{ params: { v0, kappa, theta, sigma, rho }, rmse, iterations, converged, quotes_used }`
+  - Loads the latest bid/ask per contract from the `options_data` table (mid prices) and fits Heston parameters. Requires `DATABASE_URL`; returns 503 if no database is connected and 400 if fewer than 5 usable quotes exist.
 
 - `POST /greeks/european-option`
   - Body: same as european-option pricing

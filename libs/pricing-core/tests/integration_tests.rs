@@ -164,7 +164,9 @@ fn test_second_order_greeks() {
         OptionType::Call,
     );
 
-    let sog = option.second_order_greeks().expect("Should get second-order Greeks");
+    let sog = option
+        .second_order_greeks()
+        .expect("Should get second-order Greeks");
     assert!(sog.vanna.is_finite());
     assert!(sog.vomma.is_finite());
     assert!(sog.charm.is_finite());
