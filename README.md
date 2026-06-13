@@ -6,8 +6,8 @@ A full-stack financial pricing and risk platform for derivatives and fixed incom
 
 This project provides a complete quantitative finance stack:
 
-- **pricing-core** — High-performance Rust library for pricing options (Black-Scholes, Barone-Adesi-Whaley, Binomial, Monte Carlo), bonds, and computing Greeks.
-- **pricing-api** — Axum-based HTTP API exposing pricing endpoints.
+- **pricing-core** — High-performance Rust library for pricing options (Black-Scholes, Barone-Adesi-Whaley, Binomial, Monte Carlo, Heston), bonds, computing Greeks, and calibrating stochastic volatility models against market quotes.
+- **pricing-api** — Axum-based HTTP API exposing pricing, Greeks, and Heston calibration endpoints.
 - **web** — React + Vite + TypeScript frontend.
 
 ## Architecture
@@ -28,8 +28,8 @@ pricing_platform/
 
 | Component | Technology |
 |-----------|------------|
-| Pricing Engine | Rust, `rust_decimal`, `rayon`, `rand` |
-| API | Rust, Axum, Tokio |
+| Pricing Engine | Rust, `rust_decimal`, `rayon`, `rand`, `num-complex` |
+| API | Rust, Axum, Tokio, `sqlx` |
 | Frontend | React 18, TypeScript, Vite |
 | Database | TimescaleDB (PostgreSQL 16) |
 | Deployment | Docker, Docker Compose, Nginx |
@@ -98,11 +98,23 @@ pgAdmin is included in the Docker Compose stack for easy database exploration.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Health check |
-| POST | `/price/european-option` | Price a European option |
-| POST | `/price/american-option` | Price an American option |
+| POST | `/price/european-option` | Price a European option (Black-Scholes) |
+| POST | `/price/american-option` | Price an American option (Binomial) |
+| POST | `/price/baw-american-option` | Price an American option (Barone-Adesi-Whaley) |
+| POST | `/price/heston-option` | Price a European option with user-supplied Heston parameters |
+| POST | `/calibrate/heston` | Fit Heston parameters to live option quotes from TimescaleDB |
 | POST | `/greeks/european-option` | Compute Greeks for a European option |
+| POST | `/greeks/american-option` | Compute Greeks for an American option |
+| POST | `/greeks/second-order/european-option` | Compute second-order Greeks (vanna, charm, vomma, speed) |
+| POST | `/api/products` | List available product analytics |
+| POST | `/api/analytics/price` | Generic product-driven pricing |
+| POST | `/api/analytics/greeks` | Generic product-driven Greeks |
+| POST | `/api/analytics/second-order-greeks` | Generic product-driven second-order Greeks |
+| POST | `/api/analytics/curve/price` | Price across strikes, spots, or fixed-strike curves |
+| POST | `/api/analytics/curve/greeks` | Greeks across a curve |
+| POST | `/api/analytics/curve/second-order-greeks` | Second-order Greeks across a curve |
 
-Example request:
+Example request — Black-Scholes:
 
 ```bash
 curl -X POST http://localhost:3000/price/european-option \
@@ -116,6 +128,41 @@ curl -X POST http://localhost:3000/price/european-option \
     "option_type": "Call"
   }'
 ```
+
+Example request — Heston (user-supplied parameters):
+
+```bash
+curl -X POST http://localhost:3000/price/heston-option \
+  -H "Content-Type: application/json" \
+  -d '{
+    "strike": "100",
+    "spot": "105",
+    "risk_free_rate": "0.05",
+    "time_to_maturity": 1.0,
+    "option_type": "Call",
+    "heston_params": {
+      "v0": 0.04,
+      "kappa": 1.5,
+      "theta": 0.04,
+      "sigma": 0.5,
+      "rho": -0.5
+    }
+  }'
+```
+
+Example request — Heston calibration (loads the latest quotes from TimescaleDB):
+
+```bash
+curl -X POST http://localhost:3000/calibrate/heston \
+  -H "Content-Type: application/json" \
+  -d '{
+    "symbol": "AAPL",
+    "spot": "195.50",
+    "risk_free_rate": "0.05"
+  }'
+```
+
+The response contains the fitted parameters (`v0`, `kappa`, `theta`, `sigma`, `rho`), the achieved RMSE, iteration count, a convergence flag, and the number of quotes used. Calibration requires `DATABASE_URL` to be set and at least 5 usable quotes to be present in the `options_data` table.
 
 ## Local Development
 
@@ -134,6 +181,28 @@ cargo bench
 cargo run --example option_pricing
 cargo run --example bond_pricing
 cargo run --example american_option_pricing
+```
+
+## Model Calibration
+
+`pricing-core` ships a synchronous, side-effect-free calibration pipeline under `src/calibration/`. The current scaffold provides a Heston calibrator that fits `(v0, κ, θ, σ, ρ)` to vanilla option quotes via bounded Nelder-Mead:
+
+- **`MarketQuote`** — vanilla quote (`strike`, `time_to_expiry`, `option_type`, `market_price`) used as the calibration target.
+- **`HestonCalibrator`** — minimises mean squared pricing error against the supplied quotes. Requires at least 5 quotes (one per parameter) and enforces box bounds on each parameter to keep the search in the feasible region.
+- **`CalibrationConfig`** — initial guess, iteration cap, and convergence tolerance.
+- **`CalibrationResult`** — fitted `HestonParams`, RMSE, iteration count, and a `converged` flag.
+
+Quote sourcing lives in `pricing-api/src/db.rs` — the API loads the latest bid/ask per contract from the `options_data` hypertable, takes the mid, and dispatches the synchronous fit on a blocking thread. The crate boundary keeps the calibrator pure and testable.
+
+```rust
+use pricing_core::prelude::*;
+use pricing_core::MarketQuote;
+use rust_decimal_macros::dec;
+
+let calibrator = HestonCalibrator::new(dec!(100), dec!(0.03));
+let quotes: Vec<MarketQuote> = /* load from market data */;
+let result = calibrator.calibrate(&quotes)?;
+println!("Fitted v0={:.4}, kappa={:.4}", result.params.v0, result.params.kappa);
 ```
 
 ### pricing-api (Rust)
@@ -172,7 +241,8 @@ pricing_platform/
 │   ├── src/
 │   │   ├── core/          # Money, Currency, InterestRate, DayCount, Errors, Traits
 │   │   ├── instruments/   # Bond, Option types
-│   │   ├── pricing/       # Black-Scholes, Binomial, Monte Carlo, Barone-Adesi-Whaley
+│   │   ├── pricing/       # Black-Scholes, Binomial, Monte Carlo, Barone-Adesi-Whaley, Heston
+│   │   ├── calibration/   # Model calibration (Heston Nelder-Mead, MarketQuote)
 │   │   ├── risk/          # Greeks calculation
 │   │   └── utils/
 │   ├── examples/          # Runnable examples
